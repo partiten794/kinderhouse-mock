@@ -225,7 +225,7 @@
   .chat-input { display: flex; gap: 8px; margin-top: 12px; }
   .chat-input input { flex: 1; padding: 10px 14px; border: 1px solid var(--line); border-radius: 24px; font-size: 14px; font-family: inherit; }
   .send-btn { background: var(--kh); color: #fff; border: none; border-radius: 24px; padding: 10px 20px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
-  #inqList tr.sel td { background: var(--kh-soft); }
+  #inqList tr.sel td, #histTable tr.sel td { background: var(--kh-soft); }
   #inqList tbody tr { cursor: pointer; }
 
   /* お迎え実績の転記 */
@@ -310,6 +310,7 @@
       <h1>キンダーハウス</h1>
     </div>
     <div class="user">山田家<br><b>はると</b>(3年)・レギュラー会員<br>
+      <button class="help-btn" onclick="showHistory()">利用履歴</button>
       <button class="help-btn" onclick="showChat()">問い合わせ<span id="chatDot" style="color:var(--pink)"> ●</span></button>
       <button class="help-btn" onclick="showManual('parent')">使い方ガイド</button>
     </div>
@@ -365,6 +366,30 @@
       <button class="btn primary" onclick="saveDay()">この日を保存</button>
     </div>
     <button class="btn danger-link" id="btnCancelDay" onclick="cancelDay()">この日の利用をキャンセルする</button>
+  </div>
+</div>
+
+<!-- ==================== 利用履歴(保護者側) ==================== -->
+<div class="app hidden" id="parentHistory">
+  <button class="manual-back" onclick="closeHistory()">‹ もどる</button>
+  <header class="app-head">
+    <div class="brand">
+      <div class="kicker">はると(3年)・レギュラー会員</div>
+      <h1>利用履歴</h1>
+    </div>
+  </header>
+  <div class="card">
+    <h2>月ごとの利用</h2>
+    <div class="table-scroll">
+    <table class="grid" id="histTable"></table>
+    </div>
+    <p class="muted" style="margin-top:8px">行をタップすると、その月の明細が下に表示されます。</p>
+  </div>
+  <div class="card">
+    <h2 id="histDetailTitle">明細</h2>
+    <div class="table-scroll">
+    <table class="grid" id="histDetail"></table>
+    </div>
   </div>
 </div>
 
@@ -473,6 +498,16 @@
       </table>
       </div>
       <p class="muted" style="margin-top:10px">※レギュラー/準レギュラーは定額(月〜金)。土曜利用はスポット(300円/30分)として加算。延長700円/回+おやつ代300円は課金運用を確認中(仮で計上)。実装時は年度改定に備えて料金マスタ化。</p>
+    </div>
+
+    <div class="card">
+      <h2>児童別の利用履歴</h2>
+      <div class="toolbar">
+        <select><option>はると(3年)</option><option>そうた(1年)</option><option>はな(1年)</option></select>
+      </div>
+      <div class="table-scroll">
+      <table class="grid" id="histTableAdmin"></table>
+      </div>
     </div>
   </div>
 
@@ -619,6 +654,11 @@
   </div>
 
   <div class="card">
+    <h2>利用履歴</h2>
+    <p>画面右上の「利用履歴」から、月ごとの利用日数・合計時間・請求額を確認できます。月をタップすると、その月の日ごとの明細も見られます。申込み中の月は概算で表示されます。</p>
+  </div>
+
+  <div class="card">
     <h2>問い合わせ</h2>
     <p>画面右上の「問い合わせ」から、キンダーハウスへメッセージで質問・相談ができます。返信も同じ画面に届きます。自分のメッセージには相手が読んだかどうか(既読・未読)が表示されます。</p>
     <div class="kbd-note">当日の変更・欠席などお急ぎの用件は、問い合わせではなくお電話でお願いします。</div>
@@ -659,7 +699,7 @@
       <thead><tr><th>タブ</th><th>役割</th><th>使うタイミング</th></tr></thead>
       <tbody>
         <tr><td>日別利用者</td><td>その日の出席簿。入退室・バス・直前変更を一覧</td><td>毎日</td></tr>
-        <tr><td>月次集計</td><td>児童ごとの利用実績と請求額の自動集計</td><td>月末〜月初</td></tr>
+        <tr><td>月次集計</td><td>児童ごとの利用実績と請求額の自動集計。児童別の過去月履歴もここで確認</td><td>月末〜月初</td></tr>
         <tr><td>利用明細</td><td>児童ごとの明細書のプレビューとPDF出力</td><td>請求前</td></tr>
         <tr><td>お知らせ配信</td><td>全保護者への連絡(アプリ内+メール)</td><td>随時</td></tr>
         <tr><td>問い合わせ</td><td>保護者からの個別相談への返信。未読件数がタブに表示</td><td>随時</td></tr>
@@ -931,6 +971,51 @@ function allOnTime(){
   renderActuals(); showToast("未入力分を予定どおりで確定しました(モック)");
 }
 
+// ---------- 利用履歴 ----------
+// hours/amount は確定月の実績。当月(申込み中)は概算
+const HISTORY = [
+  { ym:"2026年4月", status:"申込み中", days:19, hours:"—",     amount:"概算 ¥17,500" },
+  { ym:"2026年3月", status:"確定",     days:16, hours:"36.5h", amount:"¥15,000", note:"3月増額月" },
+  { ym:"2026年2月", status:"確定",     days:18, hours:"40.0h", amount:"¥13,000" },
+  { ym:"2026年1月", status:"確定",     days:15, hours:"33.5h", amount:"¥13,000" },
+];
+let histSel = 1;
+
+function histRowsHTML(clickable){
+  return HISTORY.map((h,i)=>`
+    <tr ${clickable?`onclick="histPick(${i})" class="${i===histSel?"sel":""}" style="cursor:pointer"`:""}>
+      <td>${h.ym}</td>
+      <td>${h.status==="申込み中"?'<span class="badge blue">申込み中</span>':'<span class="badge green">確定</span>'}</td>
+      <td class="num">${h.days}日</td>
+      <td class="num">${h.hours}</td>
+      <td class="num">${h.amount}${h.note?`<div class="muted" style="font-size:10.5px">${h.note}</div>`:""}</td>
+    </tr>`).join("");
+}
+const HIST_HEAD = `<thead><tr><th>月</th><th>状態</th><th class="num">利用日数</th><th class="num">合計時間</th><th class="num">請求額</th></tr></thead>`;
+
+function renderHistory(){
+  document.getElementById("histTable").innerHTML = HIST_HEAD + `<tbody>${histRowsHTML(true)}</tbody>`;
+  const h = HISTORY[histSel];
+  document.getElementById("histDetailTitle").textContent = `${h.ym}の明細`;
+  const m = h.ym.match(/(\d+)月/)[1];
+  const sample = [2,3,4,5,6].map(d =>
+    `<tr><td>${m}/${d}</td><td>お迎え 16:30</td><td class="num">2.0h</td></tr>`).join("");
+  document.getElementById("histDetail").innerHTML =
+    `<thead><tr><th>日付</th><th>内容</th><th class="num">時間</th></tr></thead>
+     <tbody>${sample}<tr><td colspan="3" class="muted" style="text-align:center">… ほか${h.days-5}日(モックでは省略) …</td></tr></tbody>`;
+}
+function histPick(i){ histSel = i; renderHistory(); }
+function renderHistoryAdmin(){
+  document.getElementById("histTableAdmin").innerHTML = HIST_HEAD + `<tbody>${histRowsHTML(false)}</tbody>`;
+}
+function showHistory(){
+  document.getElementById("parentApp").classList.add("hidden");
+  document.getElementById("submitBar").classList.add("hidden");
+  document.getElementById("parentHistory").classList.remove("hidden");
+  renderHistory(); window.scrollTo(0,0);
+}
+function closeHistory(){ switchRole("parent"); }
+
 // ---------- 問い合わせ(保護者⇔管理者) ----------
 // read = 相手が読んだかどうか。モックでは両画面が状態を共有しているので、
 // 保護者で送信→管理者でスレッドを開くと「既読」に変わる流れを実演できる
@@ -1020,6 +1105,7 @@ function switchRole(r){
   document.getElementById("manualParent").classList.add("hidden");
   document.getElementById("manualAdmin").classList.add("hidden");
   document.getElementById("parentChat").classList.add("hidden");
+  document.getElementById("parentHistory").classList.add("hidden");
   document.getElementById("parentApp").classList.toggle("hidden", r!=="parent");
   document.getElementById("submitBar").classList.toggle("hidden", r!=="parent");
   document.getElementById("adminApp").classList.toggle("hidden", r!=="admin");
@@ -1032,6 +1118,7 @@ function showManual(which){
   document.getElementById("adminApp").classList.add("hidden");
   document.getElementById("submitBar").classList.add("hidden");
   document.getElementById("parentChat").classList.add("hidden");
+  document.getElementById("parentHistory").classList.add("hidden");
   document.getElementById("manualParent").classList.toggle("hidden", which!=="parent");
   document.getElementById("manualAdmin").classList.toggle("hidden", which!=="admin");
   window.scrollTo(0,0);
@@ -1057,6 +1144,7 @@ renderInqList();
 renderChat("chatLogAdmin", THREADS[0], "admin");
 renderChat("chatLogParent", THREADS[0], "parent");
 updateBadges();
+renderHistoryAdmin();
 </script>
 </body>
 </html>
