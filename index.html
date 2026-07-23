@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>キンダーハウス 利用予約システム(モックアップ)</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -616,7 +617,47 @@
   </div>
 </div>
 
+<!-- 合言葉ゲート(ホスティング時のみ。file://で開いたときは出ない) -->
+<div id="gate" class="hidden" style="position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="max-width:340px;width:100%;text-align:center;">
+    <div class="kicker" style="font-size:11px;color:var(--kh-deep);font-weight:700;letter-spacing:.15em;">学童クラブ</div>
+    <h1 style="font-size:19px;margin-bottom:6px;">キンダーハウス</h1>
+    <p class="muted" style="margin-bottom:18px;">テストサイトです。お渡ししている合言葉を入力してください。</p>
+    <input id="gateInput" type="password" placeholder="合言葉" autocomplete="off"
+      style="width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit;text-align:center;margin-bottom:10px;"
+      onkeydown="if(event.key==='Enter')gateCheck()">
+    <button class="btn primary" style="width:100%;" onclick="gateCheck()">開く</button>
+    <p id="gateErr" class="muted" style="color:var(--red);margin-top:10px;visibility:hidden;">合言葉が違います</p>
+  </div>
+</div>
+
 <div class="toast" id="toast">保存しました</div>
+
+<script>
+// ---------- 合言葉ゲート ----------
+const GATE_HASH = "958dccacc900c3c85d309c6612d698d3632dcbd96558af3cd05b6e4244cca81c"; // 変更時は echo -n "新合言葉" | shasum -a 256
+async function sha256(s){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function gateInit(){
+  const hosted = location.protocol !== "file:";
+  if (hosted && sessionStorage.getItem("khGate") !== GATE_HASH) {
+    document.getElementById("gate").classList.remove("hidden");
+    setTimeout(()=>document.getElementById("gateInput").focus(), 100);
+  }
+}
+async function gateCheck(){
+  const h = await sha256(document.getElementById("gateInput").value.trim());
+  if (h === GATE_HASH) {
+    sessionStorage.setItem("khGate", h);
+    document.getElementById("gate").classList.add("hidden");
+  } else {
+    document.getElementById("gateErr").style.visibility = "visible";
+  }
+}
+gateInit();
+</script>
 
 <script>
 // ---------- サンプルデータ ----------
