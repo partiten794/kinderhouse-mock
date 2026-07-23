@@ -6,50 +6,64 @@
 <title>キンダーハウス 利用予約システム(モックアップ)</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-  /* 学園公式サイト(steiner.ed.jp)準拠:
-     白地 + 水彩のピンク〜藤色 / 学童クラブのブランド色 #9d9dfc / Noto Sans JP / 本文 #333 */
+  /* ==========================================================================
+     配色・書体: ドイツ自由ヴァルドルフ学校連盟 https://www.waldorfschule.de/ 準拠(2026-07-23 試験適用)
+     連盟サイトの独自パレット6色(自然物の名前)をそのまま採用:
+       aqua #589FB4 / azure #46769A / ember #E57624 / honey #EEA63E / rose #D23C55 / sage #829768
+     本文色は純黒でなく #161615、背景は白。書体は Exo 2(細い本文300 × 太い見出し700 のコントラスト)。
+     ※ 連盟サイトはGDPR対応でExo 2をセルフホスト。ここはモックのためGoogle Fontsから読み込み。
+        日本語グリフはExo 2に無いので Noto Sans JP を後段に置いて併用する。
+     ※ 旧配色(学園公式 steiner.ed.jp の水彩ピンク〜藤色 #9d9dfc)へ戻す場合はこのコミットを revert する。
+     ========================================================================== */
   :root {
-    --bg: #fdfdfe;
+    --bg: #ffffff;
     --card: #ffffff;
-    --ink: #333333;
-    --ink-soft: #8a8a92;
-    --line: #ececf2;
-    --kh: #9d9dfc;          /* 学童クラブ ブランド色(公式サイトより) */
-    --kh-deep: #8383ea;
-    --kh-soft: #f0f0fe;
-    --pink: #e895b4;        /* 学園サイトの水彩ピンク系 */
-    --pink-soft: #fcedf3;
-    --green: #7fae7e;
-    --green-soft: #ecf4ec;
-    --red: #d98a7c;
-    --red-soft: #faeae6;
+    --ink: #161615;         /* 連盟サイトの本文色(わずかに温かみのある黒) */
+    --ink-soft: #6f6f6a;
+    --line: #e3e3df;
+    --kh: #589FB4;          /* aqua = 学童クラブのブランド色に採用 */
+    --kh-deep: #46769A;     /* azure */
+    --kh-soft: #e9f1f4;
+    --pink: #D23C55;        /* rose = 土曜・行事 */
+    --pink-soft: #fbeaed;
+    --green: #829768;       /* sage = 確定 */
+    --green-soft: #eef1e9;
+    --red: #D23C55;         /* rose = キャンセル・警告 */
+    --red-soft: #fbeaed;
+    --ember: #E57624;       /* ember = 変更・追加料金など注意喚起 */
+    --ember-soft: #fdefe4;
+    --honey: #EEA63E;       /* honey = 補助的なアクセント */
     --radius: 12px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+    font-family: "Exo 2", "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+    font-weight: 300;   /* 連盟サイトに合わせ本文は Light */
     background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.6;
   }
-  /* 水彩のにじみ(公式サイトのセクション背景のトーン)をごく薄く */
+  /* 連盟サイトは白地にベタ色を置く構成。水彩のにじみは残しつつ色相を新パレットへ寄せる */
   body::before {
     content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background:
-      radial-gradient(55% 40% at 10% 0%,  rgba(232, 149, 180, .10), transparent 70%),
-      radial-gradient(50% 38% at 90% 8%,  rgba(157, 157, 252, .10), transparent 70%),
-      radial-gradient(50% 40% at 50% 100%, rgba(157, 157, 252, .06), transparent 70%);
+      radial-gradient(55% 40% at 10% 0%,  rgba(88, 159, 180, .09), transparent 70%),
+      radial-gradient(50% 38% at 90% 8%,  rgba(238, 166, 62, .08), transparent 70%),
+      radial-gradient(50% 40% at 50% 100%, rgba(130, 151, 104, .07), transparent 70%);
   }
+  b, strong { font-weight: 700; }
   .demo-bar {
     background: #fff; color: var(--ink); padding: 8px 16px;
     display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     position: sticky; top: 0; z-index: 100;
     border-bottom: 1px solid var(--line);
   }
-  /* 上端に水彩の虹ストライプ */
+  /* 上端のストライプ = 連盟パレット6色をベタで並べる(にじみでなく色面で見せる) */
   .demo-bar::before {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, #f2b9cf, #f5d4a8, #cfe3b8, #b5d6ef, #c7c7f7);
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg,
+      var(--kh) 0 16.66%, var(--kh-deep) 16.66% 33.33%, var(--green) 33.33% 50%,
+      var(--honey) 50% 66.66%, var(--ember) 66.66% 83.33%, var(--pink) 83.33% 100%);
   }
   .demo-bar .tag { font-size: 11px; background: var(--kh-soft); color: var(--kh-deep); padding: 2px 10px; border-radius: 10px; font-weight: 700; }
   .demo-bar button {
@@ -63,12 +77,12 @@
 
   header.app-head { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 16px; }
   .app-head .brand .kicker { font-size: 11px; color: var(--kh-deep); font-weight: 700; letter-spacing: .15em; }
-  .app-head h1 { font-size: 19px; font-weight: 700; }
+  .app-head h1 { font-size: 24px; font-weight: 700; letter-spacing: -.01em; line-height: 1.25; }
   .app-head .user { font-size: 12px; color: var(--ink-soft); text-align: right; }
 
   .card {
     background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(120, 120, 180, .05);
+    padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(22, 22, 21, .05);
   }
   /* 見出しは公式サイトの「利用時間」「利用料金」ピルに寄せる */
   .card h2 {
@@ -82,7 +96,7 @@
   .badge.green { background: var(--green-soft); color: var(--green); }
   .badge.red { background: var(--red-soft); color: var(--red); }
   .badge.blue { background: var(--kh-soft); color: var(--kh-deep); }
-  .badge.orange { background: var(--pink-soft); color: var(--pink); }
+  .badge.orange { background: var(--ember-soft); color: var(--ember); }
 
   /* ---- お知らせ ---- */
   .notice { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
@@ -104,7 +118,7 @@
 
   /* ---- 月ナビ ---- */
   .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .month-nav .mtitle { font-size: 18px; font-weight: 700; }
+  .month-nav .mtitle { font-size: 21px; font-weight: 700; letter-spacing: -.01em; }
   .month-nav .msub { font-size: 11px; color: var(--ink-soft); }
   .month-nav button { background: #fff; border: 1px solid var(--line); border-radius: 50%; width: 34px; height: 34px; cursor: pointer; color: var(--kh-deep); font-size: 15px; }
 
@@ -118,7 +132,7 @@
     background: var(--card); border: 1px solid var(--line); border-radius: 10px;
     padding: 8px 12px; margin-bottom: 5px; cursor: pointer;
   }
-  .day-row:not(.closed):not(.locked):hover { border-color: #d5d5f5; }
+  .day-row:not(.closed):not(.locked):hover { border-color: var(--kh); }
   .day-row.closed {
     background: transparent; border: none; box-shadow: none; cursor: default;
     padding: 2px 12px; opacity: .5;
@@ -127,8 +141,8 @@
   .day-row.closed .day-time .none { font-size: 12px; }
   .day-row.sat { border-left: 3px solid var(--pink); }
   .day-row.applied { border-left: 3px solid var(--green); }
-  .day-row.draft { border-left: 3px dashed rgba(157,157,252,.65); }
-  .day-row.locked { background: #f7f7fa; cursor: default; }
+  .day-row.draft { border-left: 3px dashed rgba(88,159,180,.65); }
+  .day-row.locked { background: #f6f6f3; cursor: default; }
   .day-date { width: 46px; text-align: center; flex-shrink: 0; display: flex; align-items: baseline; justify-content: center; gap: 3px; }
   .day-date .d { font-size: 16px; font-weight: 700; }
   .day-date .w { font-size: 11px; color: var(--ink-soft); }
@@ -136,8 +150,8 @@
   .day-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
   .day-event { font-size: 11px; color: var(--pink); font-weight: 700; white-space: nowrap; }
   .day-time { font-size: 14px; font-weight: 700; }
-  .day-time .none { color: #c4c4d0; font-weight: 400; font-size: 13px; }
-  .chev { color: #c9c9dc; font-size: 15px; }
+  .day-time .none { color: #b7b7b1; font-weight: 400; font-size: 13px; }
+  .chev { color: #b7b7b1; font-size: 15px; }
   .locked-note { font-size: 10.5px; color: var(--ink-soft); white-space: nowrap; }
 
   /* ---- 入力シート(モーダル) ---- */
@@ -195,13 +209,13 @@
   .admin-tabs button.active { background: var(--kh); color: #fff; border-color: var(--kh); font-weight: 700; }
   table.grid { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.grid th, table.grid td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
-  table.grid th { font-size: 11.5px; color: var(--ink-soft); font-weight: 700; background: #f8f8fc; }
+  table.grid th { font-size: 11.5px; color: var(--ink-soft); font-weight: 700; background: #f6f6f3; }
   table.grid td.num, table.grid th.num { text-align: right; font-variant-numeric: tabular-nums; }
   .table-scroll { overflow-x: auto; }
   .stat-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
   .stat {
     flex: 1; min-width: 130px; background: var(--card); border: 1px solid var(--line);
-    border-radius: var(--radius); padding: 14px 16px; box-shadow: 0 2px 10px rgba(120,120,180,.05);
+    border-radius: var(--radius); padding: 14px 16px; box-shadow: 0 2px 10px rgba(22,22,21,.05);
   }
   .stat .k { font-size: 12px; color: var(--ink-soft); }
   .stat .v { font-size: 24px; font-weight: 700; margin-top: 2px; }
@@ -211,13 +225,14 @@
     padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13.5px; color: var(--ink); font-family: inherit;
   }
   .toolbar .spacer { flex: 1; }
-  .toolbar .out-btn { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; color: var(--kh-deep); font-weight: 700; font-family: inherit; }
+  .out-btn { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; color: var(--kh-deep); font-weight: 700; font-family: inherit; white-space: nowrap; }
+  .out-btn:hover { background: var(--kh-soft); }
 
   /* 問い合わせチャット */
   .chat { display: flex; flex-direction: column; gap: 4px; padding: 4px 0; }
   .msg { max-width: 78%; padding: 9px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; }
   .msg.me { align-self: flex-end; background: var(--kh); color: #fff; border-bottom-right-radius: 4px; }
-  .msg.them { align-self: flex-start; background: #f4f4fa; border-bottom-left-radius: 4px; }
+  .msg.them { align-self: flex-start; background: #f2f2ee; border-bottom-left-radius: 4px; }
   .msg-meta { font-size: 10.5px; color: var(--ink-soft); margin: 0 4px 6px; }
   .msg-meta.me { align-self: flex-end; }
   .msg-meta.them { align-self: flex-start; }
@@ -234,7 +249,7 @@
     cursor: pointer; color: var(--kh-deep); font-weight: 700; font-size: 13px; font-family: inherit;
   }
   .act-time { display: inline-block; min-width: 52px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .act-time.pending { color: #b9b9c6; font-weight: 400; }
+  .act-time.pending { color: #b7b7b1; font-weight: 400; }
   .ontime-btn {
     border: 1px solid var(--line); background: #fff; border-radius: 16px; padding: 5px 12px;
     font-size: 12px; cursor: pointer; color: var(--kh-deep); font-weight: 700; font-family: inherit;
@@ -249,8 +264,8 @@
   .invoice h3 { text-align: center; font-size: 17px; letter-spacing: .2em; margin-bottom: 20px; }
   .invoice .inv-head { display: flex; justify-content: space-between; margin-bottom: 18px; }
   .invoice table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-  .invoice th, .invoice td { border: 1px solid #d9d9e8; padding: 5px 8px; }
-  .invoice th { background: #f4f4fb; font-weight: 600; font-size: 12px; }
+  .invoice th, .invoice td { border: 1px solid #ddddd8; padding: 5px 8px; }
+  .invoice th { background: #f6f6f3; font-weight: 600; font-size: 12px; }
   .invoice .total-line { text-align: right; font-size: 15px; }
   .invoice .total-line b { font-size: 19px; margin-left: 8px; }
 
@@ -281,7 +296,54 @@
   .manual ul { padding-left: 20px; margin: 6px 0; }
   .manual table.grid td, .manual table.grid th { white-space: normal; }
   .legend-sample { pointer-events: none; margin: 6px 0; }
-  .kbd-note { background: var(--pink-soft); border-radius: 8px; padding: 8px 12px; font-size: 12.5px; color: #c86e93; margin: 8px 0; }
+  .kbd-note { background: var(--pink-soft); border-radius: 8px; padding: 8px 12px; font-size: 12.5px; color: var(--pink); margin: 8px 0; }
+
+  /* ---- 利用者マスタ ---- */
+  .row-click tbody tr { cursor: pointer; }
+  .row-click tbody tr:hover { background: var(--kh-soft); }
+  .mstr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+  @media (max-width: 760px) { .mstr-grid { grid-template-columns: 1fr; } }
+  .mstr-grid .card { margin-bottom: 0; }
+  table.kv { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.kv th {
+    text-align: left; color: var(--ink-soft); font-weight: 700; font-size: 11.5px;
+    width: 104px; padding: 6px 10px 6px 0; vertical-align: top; white-space: nowrap;
+  }
+  table.kv td { padding: 6px 0; vertical-align: top; border-bottom: 1px solid var(--line); }
+  /* ---- 保護者画面のメニュー(4つ並び) ---- */
+  .quick-menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 14px; }
+  .qm {
+    position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 11px 4px 9px; cursor: pointer; font-family: inherit; text-align: center;
+    box-shadow: 0 2px 10px rgba(22,22,21,.05); transition: background .15s, border-color .15s, transform .15s;
+  }
+  .qm:hover { border-color: var(--kh); background: var(--kh-soft); }
+  .qm:active { transform: scale(.97); }
+  .qm .ic {
+    width: 32px; height: 32px; margin: 0 auto 6px; border-radius: 50%;
+    background: var(--kh-soft); color: var(--kh-deep);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qm .lb { display: block; font-size: 10.5px; font-weight: 700; color: var(--ink); line-height: 1.3; letter-spacing: -.02em; min-height: 2.6em; }
+  .qm .dot { position: absolute; top: 8px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--pink); }
+
+  .detail-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .detail-head h2 { font-size: 18px; font-weight: 700; }
+  .detail-head .spacer { flex: 1; }
+  .memo-box {
+    width: 100%; min-height: 72px; border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px; font-size: 13.5px; font-family: inherit; color: var(--ink); resize: vertical; line-height: 1.6;
+  }
+  .add-row { display: flex; gap: 8px; margin-top: 10px; }
+  .add-row input { flex: 1; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 13.5px; font-family: inherit; }
+  .log-item { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+  .log-item:last-child { border-bottom: none; }
+  .log-item .when { color: var(--ink-soft); font-size: 11.5px; white-space: nowrap; width: 92px; flex-shrink: 0; padding-top: 1px; }
+  .log-item .who { color: var(--kh-deep); font-weight: 700; }
+  .req-card { border: 1px solid var(--kh); background: var(--kh-soft); }
+  .now-member { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .now-member .big { font-size: 20px; font-weight: 700; color: var(--kh-deep); }
+  .fee-note { font-size: 12.5px; color: var(--ink-soft); }
 
   .hidden { display: none !important; }
   .toast {
@@ -309,12 +371,28 @@
       <div class="kicker">学童クラブ</div>
       <h1>キンダーハウス</h1>
     </div>
-    <div class="user">山田家<br><b>はると</b>(3年)・レギュラー会員<br>
-      <button class="help-btn" onclick="showHistory()">利用履歴</button>
-      <button class="help-btn" onclick="showChat()">問い合わせ<span id="chatDot" style="color:var(--pink)"> ●</span></button>
-      <button class="help-btn" onclick="showManual('parent')">使い方ガイド</button>
-    </div>
+    <div class="user">山田家<br><b>はると</b>(3年)<br><span id="parentMemberLabel">レギュラー</span>会員</div>
   </header>
+
+  <div class="quick-menu">
+    <button class="qm" onclick="showHistory()">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6.75"/><path d="M9 4.8V9l2.8 1.8"/></svg></span>
+      <span class="lb">利用履歴</span>
+    </button>
+    <button class="qm" onclick="showMember()">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.4h9.6M10.4 4.2l2.2 2.2-2.2 2.2M15 11.6H5.4M7.6 9.4l-2.2 2.2 2.2 2.2"/></svg></span>
+      <span class="lb">会員区分<br>の変更</span>
+    </button>
+    <button class="qm" onclick="showChat()">
+      <span class="dot" id="chatDot"></span>
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.4 8.6c0 2.9-2.9 5.3-6.4 5.3-.8 0-1.6-.1-2.3-.36L3.2 14.8l1.2-2.6C3.3 11.2 2.6 10 2.6 8.6c0-2.9 2.9-5.3 6.4-5.3s6.4 2.4 6.4 5.3z"/></svg></span>
+      <span class="lb">問い合わせ</span>
+    </button>
+    <button class="qm" onclick="showManual('parent')">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 4.2c1.6-.9 4.4-.8 6.2.7 1.8-1.5 4.6-1.6 6.2-.7v8.9c-1.6-.9-4.4-.8-6.2.7-1.8-1.5-4.6-1.6-6.2-.7z"/><path d="M9 4.9v8.9"/></svg></span>
+      <span class="lb">使い方<br>ガイド</span>
+    </button>
+  </div>
 
   <div class="notice-strip" onclick="showToast('お知らせ一覧(モック)')">
     <span class="ndot">●</span>
@@ -393,6 +471,60 @@
   </div>
 </div>
 
+<!-- ==================== 会員区分の変更(保護者側) ==================== -->
+<div class="app hidden" id="parentMember">
+  <button class="manual-back" onclick="closeMember()">‹ もどる</button>
+  <header class="app-head">
+    <div class="brand">
+      <div class="kicker">はると(3年)</div>
+      <h1>会員区分の変更</h1>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2>現在の区分</h2>
+    <div class="now-member">
+      <span class="big" id="curMemberName">レギュラー会員</span>
+      <span class="fee-note" id="curMemberFee">月〜金・13,000円/月(8月・3月は15,000円)</span>
+    </div>
+    <p class="muted" style="margin-top:6px">適用開始: 2024年4月 ・ 引落口座: 登録済み</p>
+    <div id="pendingReq"></div>
+  </div>
+
+  <div class="card">
+    <h2>変更を申請する</h2>
+    <div class="field">
+      <label>変更後の区分</label>
+      <div class="chips" id="memberChips"></div>
+    </div>
+    <div class="field hidden" id="fieldWeekdays">
+      <label>利用する曜日(準レギュラーは週3日まで)</label>
+      <div class="chips" id="weekdayChips"></div>
+    </div>
+    <div class="field">
+      <label>適用を開始したい月</label>
+      <select class="time-sel" id="selStartMonth" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;">
+        <option>2026年9月</option><option>2026年10月</option><option>2026年11月</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>理由・ご相談(任意)</label>
+      <textarea class="memo-box" id="reqReason" placeholder="例: 9月から習い事が始まるため、月・水・金のみの利用にしたいです"></textarea>
+    </div>
+    <div class="kbd-note">変更は<b>希望月のひと月前まで</b>にご申請ください。キンダーハウスが内容を確認し、承認されるとこの画面と問い合わせでお知らせします。</div>
+    <div class="sheet-btns">
+      <button class="btn primary" style="flex:1" onclick="submitMemberReq()">この内容で申請する</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>これまでの区分の履歴</h2>
+    <div class="table-scroll">
+      <table class="grid" id="memberHistTable"></table>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== 問い合わせ(保護者側) ==================== -->
 <div class="app hidden" id="parentChat">
   <button class="manual-back" onclick="closeChat()">‹ もどる</button>
@@ -428,6 +560,7 @@
     <button data-tab="invoice" onclick="adminTab('invoice')">利用明細</button>
     <button data-tab="notice" onclick="adminTab('notice')">お知らせ配信</button>
     <button data-tab="inquiry" onclick="adminTab('inquiry')">問い合わせ<span id="inqBadge" class="badge red" style="margin-left:5px">2</span></button>
+    <button data-tab="master" onclick="adminTab('master')">利用者マスタ<span id="reqBadge" class="badge red" style="margin-left:5px">1</span></button>
     <button data-tab="calendar" onclick="adminTab('calendar')">学園カレンダー設定</button>
   </div>
 
@@ -446,19 +579,16 @@
         <button class="out-btn">出席簿を印刷</button>
         <button class="out-btn">CSV</button>
       </div>
+      <p class="muted" style="margin-bottom:8px">電話・窓口で受けた当日の変更やキャンセルは、右端の「<b>修正</b>」から管理者が直接書き換えられます(申込みの締切後・前日15時以降でも可)。メモもそこで入力します。</p>
       <div class="table-scroll">
-      <table class="grid">
-        <thead><tr><th>学年</th><th>名前</th><th>会員区分</th><th>入室</th><th>退室</th><th>バス</th><th>状態</th><th>メモ</th></tr></thead>
-        <tbody>
-          <tr><td>1年</td><td>そうた</td><td>レギュラー</td><td>下校後</td><td>14:30</td><td>—</td><td><span class="badge green">確定</span></td><td></td></tr>
-          <tr><td>1年</td><td>はな</td><td>準レギュラー</td><td>下校後</td><td>15:30</td><td>🚌</td><td><span class="badge green">確定</span></td><td>入学式後より</td></tr>
-          <tr><td>2年</td><td>ゆずき</td><td>スポット</td><td>下校後</td><td>16:30</td><td>—</td><td><span class="badge blue">昨日変更</span></td><td>16:00→16:30</td></tr>
-          <tr><td>3年</td><td>はると</td><td>レギュラー</td><td>下校後</td><td>16:30</td><td>🚌</td><td><span class="badge green">確定</span></td><td></td></tr>
-          <tr><td>3年</td><td>こはる</td><td>スポット</td><td>下校後</td><td>—</td><td>—</td><td><span class="badge red">当日キャンセル</span></td><td>電話連絡 8:40</td></tr>
-          <tr><td>4年</td><td>りく</td><td>レギュラー</td><td>下校後</td><td>18:30</td><td>🚌</td><td><span class="badge green">確定</span></td><td>延長保育</td></tr>
-        </tbody>
-      </table>
+      <table class="grid" id="dayTable"></table>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>管理者による修正の記録</h2>
+      <p class="muted" style="margin-bottom:8px">保護者側には修正後の内容だけが見えます。</p>
+      <div id="changeLog"></div>
     </div>
 
     <div class="card">
@@ -580,6 +710,37 @@
     </div>
   </div>
 
+  <!-- 利用者マスタ -->
+  <div id="tab-master" class="hidden">
+    <!-- 一覧 -->
+    <div id="masterList">
+      <div class="card req-card" id="reqCard">
+        <h2>会員区分の変更申請</h2>
+        <div class="table-scroll">
+        <table class="grid" id="reqTable"></table>
+        </div>
+        <p class="muted" style="margin-top:8px">承認するとその月から自動で料金計算が切り替わり、保護者にも通知されます。電話で受けた変更は、下の一覧から児童を開いて「区分を変更」で直接登録できます。</p>
+      </div>
+      <div class="card">
+        <h2>利用者一覧</h2>
+        <div class="toolbar">
+          <input id="masterSearch" placeholder="名前・家庭名で検索" oninput="renderMasterList()"
+            style="padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;font-family:inherit;min-width:200px;">
+          <span class="spacer"></span>
+          <button class="out-btn">CSV</button>
+          <button class="out-btn" onclick="showToast('新規登録フォーム(モック)')">＋ 新規登録</button>
+        </div>
+        <div class="table-scroll">
+        <table class="grid row-click" id="masterTable"></table>
+        </div>
+        <p class="muted" style="margin-top:8px">行をクリックすると、その児童の情報・備考・やり取り・利用履歴が1画面で開きます。</p>
+      </div>
+    </div>
+
+    <!-- 個別詳細 -->
+    <div id="masterDetail" class="hidden"></div>
+  </div>
+
   <!-- カレンダー設定 -->
   <div id="tab-calendar" class="hidden">
     <div class="card" style="max-width:640px">
@@ -601,6 +762,77 @@
   </div>
 </div>
 
+<!-- 管理者による予約の修正シート -->
+<div class="sheet-overlay" id="adminEditOverlay" onclick="if(event.target===this)closeAdminEdit()">
+  <div class="sheet">
+    <h3 id="aeTitle">4月8日(水) はると(3年)</h3>
+    <div class="ev">管理者による修正(電話・窓口で受けた変更をここで反映します)</div>
+    <div class="field">
+      <label>この日の状態</label>
+      <div class="chips" id="aeState"></div>
+    </div>
+    <div class="field" id="aeOutField">
+      <label>お迎え(退室)時間 ※18時以降は延長保育</label>
+      <div class="chips" id="aeOut"></div>
+    </div>
+    <div class="field" id="aeBusField">
+      <div class="toggle-row"><input type="checkbox" id="aeBus"><label for="aeBus" style="margin:0;font-size:14px;color:var(--ink)">帰りにバスを利用する</label></div>
+    </div>
+    <div class="field">
+      <label>メモ(出席簿に表示。経緯や申し送りを書きます)</label>
+      <textarea class="memo-box" id="aeMemo" placeholder="例: 母より電話 8:40。祖母がお迎え。"></textarea>
+    </div>
+    <div class="field">
+      <label>受付経路</label>
+      <div class="chips" id="aeVia"></div>
+    </div>
+    <div class="field">
+      <label>対応スタッフ</label>
+      <select id="aeStaff" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;">
+        <option>スタッフA</option><option>スタッフB</option><option>スタッフC</option>
+      </select>
+    </div>
+    <p class="muted">保存すると変更内容が記録に残り、保護者の画面・月次集計・請求にもそのまま反映されます。</p>
+    <div class="sheet-btns">
+      <button class="btn ghost" onclick="closeAdminEdit()">閉じる</button>
+      <button class="btn primary" onclick="saveAdminEdit()">この内容で修正する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 管理者による会員区分の変更シート -->
+<div class="sheet-overlay" id="memberEditOverlay" onclick="if(event.target===this)closeMemberEdit()">
+  <div class="sheet">
+    <h3 id="meTitle">会員区分の変更</h3>
+    <div class="ev" id="meNow">現在: レギュラー</div>
+    <div class="field">
+      <label>変更後の区分</label>
+      <div class="chips" id="meChips"></div>
+    </div>
+    <div class="field">
+      <label>利用曜日(準レギュラー等)</label>
+      <input id="meDays" placeholder="例: 月・水・金"
+        style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;">
+    </div>
+    <div class="field">
+      <label>適用開始月</label>
+      <select id="meStart" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;">
+        <option>2026年9月</option><option>2026年10月</option><option>2026年11月</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>受付経路・理由</label>
+      <input id="meReason" placeholder="例: 電話受付(母)。習い事開始のため"
+        style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;">
+    </div>
+    <p class="muted">適用開始月より前の確定済みの請求には影響しません。</p>
+    <div class="sheet-btns">
+      <button class="btn ghost" onclick="closeMemberEdit()">閉じる</button>
+      <button class="btn primary" onclick="saveMemberEdit()">変更を登録する</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== 保護者向けマニュアル ==================== -->
 <div class="app manual hidden" id="manualParent">
   <button class="manual-back" onclick="closeManual('parent')">‹ 申込み画面にもどる</button>
@@ -614,6 +846,7 @@
   <div class="card">
     <h2>このアプリでできること</h2>
     <p>月ごとの利用申込み・変更・キャンセルと、キンダーハウスからのお知らせの受け取りができます。毎月の紙やフォームでのやり取りはこのアプリに一本化されます。</p>
+    <p style="margin-top:6px">ホーム画面の上には <b>利用履歴</b> ・ <b>会員区分の変更</b> ・ <b>問い合わせ</b> ・ <b>使い方ガイド</b> の4つのメニューが並んでいます。新しい返信が届くと「問い合わせ」に<span style="color:var(--pink)">●</span>が付きます。</p>
     <p class="muted" style="margin-top:6px">※ログイン・アカウント管理の機能は今後追加予定です。</p>
   </div>
 
@@ -655,12 +888,25 @@
 
   <div class="card">
     <h2>利用履歴</h2>
-    <p>画面右上の「利用履歴」から、月ごとの利用日数・合計時間・請求額を確認できます。月をタップすると、その月の日ごとの明細も見られます。申込み中の月は概算で表示されます。</p>
+    <p>ホーム画面上部のメニュー「利用履歴」から、月ごとの利用日数・合計時間・請求額を確認できます。月をタップすると、その月の日ごとの明細も見られます。申込み中の月は概算で表示されます。</p>
+  </div>
+
+  <div class="card">
+    <h2>会員区分の変更・退会</h2>
+    <p>ホーム画面上部のメニュー「<b>会員区分の変更</b>」から、レギュラー・準レギュラー・スポットの変更と退会を申請できます。</p>
+    <ol class="steps">
+      <li>変更後の区分を選びます(準レギュラーの場合は利用する曜日を3日選びます)。</li>
+      <li>適用を開始したい月と、理由・ご相談(任意)を入力します。</li>
+      <li>「この内容で申請する」を押すと申請完了。画面上部に「<b>申請中</b>」と表示されます。</li>
+      <li>キンダーハウスが承認すると表示が「<b>承認されました</b>」に変わり、その月から料金計算も自動で切り替わります。</li>
+    </ol>
+    <div class="kbd-note">変更は<b>希望月のひと月前まで</b>にご申請ください。お電話で伝えていただいた場合はスタッフが代理で登録し、同じ画面に反映されます。</div>
+    <p class="muted">同じ画面の下に、これまでの区分の履歴(いつからどの区分だったか)も表示されます。</p>
   </div>
 
   <div class="card">
     <h2>問い合わせ</h2>
-    <p>画面右上の「問い合わせ」から、キンダーハウスへメッセージで質問・相談ができます。返信も同じ画面に届きます。自分のメッセージには相手が読んだかどうか(既読・未読)が表示されます。</p>
+    <p>ホーム画面上部のメニュー「問い合わせ」から、キンダーハウスへメッセージで質問・相談ができます。返信も同じ画面に届きます。自分のメッセージには相手が読んだかどうか(既読・未読)が表示されます。</p>
     <div class="kbd-note">当日の変更・欠席などお急ぎの用件は、問い合わせではなくお電話でお願いします。</div>
   </div>
 
@@ -703,6 +949,7 @@
         <tr><td>利用明細</td><td>児童ごとの明細書のプレビューとPDF出力</td><td>請求前</td></tr>
         <tr><td>お知らせ配信</td><td>全保護者への連絡(アプリ内+メール)</td><td>随時</td></tr>
         <tr><td>問い合わせ</td><td>保護者からの個別相談への返信。未読件数がタブに表示</td><td>随時</td></tr>
+        <tr><td>利用者マスタ</td><td>児童ごとの情報・備考・やり取り・利用履歴を1画面で。会員区分の変更申請の承認もここ</td><td>随時・入退会時</td></tr>
         <tr><td>学園カレンダー設定</td><td>翌月の休園日・行事・日区分の登録</td><td>毎月の受付開始前</td></tr>
       </tbody>
     </table>
@@ -733,6 +980,49 @@
   </div>
 
   <div class="card" style="max-width:680px">
+    <h2>予約を管理者が修正する(電話・窓口で受けた変更)</h2>
+    <p>「日別利用者」の各行の右端「<b>修正</b>」から、その日の予定を管理者が直接書き換えられます。<b>締切後でも前日15時を過ぎていても修正できます</b>(保護者が操作できない時間帯の電話連絡はここで受けます)。</p>
+    <ol class="steps">
+      <li><b>状態</b>を選びます —「利用する」か「欠席」。欠席を選ぶと退室時間・バスの欄は消えます。</li>
+      <li>利用する場合は<b>お迎え時間</b>を選び、必要ならバス利用を切り替えます。</li>
+      <li><b>メモ</b>に経緯を書きます(例: 母より電話 8:40。祖母がお迎え)。ここに書いた内容が出席簿のメモ欄に出ます。</li>
+      <li><b>受付経路</b>(電話/窓口/メール/スタッフ判断)と<b>対応スタッフ</b>を選んで「この内容で修正する」。</li>
+    </ol>
+    <p>保存すると、修正内容が月次集計・請求・保護者の画面にそのまま反映されます。同時に「<b>管理者による修正の記録</b>」に、いつ・誰が・何を・どの経路で受けて変えたかが自動で残ります。同じ記録は利用者マスタの各児童のページにも表示されます。</p>
+    <div class="kbd-note">状態バッジ <span class="badge orange">管理者修正</span> は、保護者の申込みではなくスタッフが書き換えた行であることを示します。</div>
+  </div>
+
+  <div class="card" style="max-width:680px">
+    <h2>利用者マスタ</h2>
+    <p>児童ごとの情報をまとめた画面です。一覧から名前をクリックすると、その子の<b>基本情報・契約条件・備考・やり取り・利用履歴・変更の記録が1画面</b>で開きます。電話が鳴ったときにこの画面を開けば、必要なことがすべてそこにあります。</p>
+    <div class="table-scroll">
+    <table class="grid">
+      <thead><tr><th>ブロック</th><th>入っているもの</th></tr></thead>
+      <tbody>
+        <tr><td>基本情報</td><td>家庭・保護者・電話(第2連絡先)・メール・地区・きょうだい・入会日・引落の登録状況</td></tr>
+        <tr><td>契約・利用条件</td><td>会員区分と料金・適用開始月・利用曜日・バス(降車場所)・お迎え可能な人・アレルギー・配慮事項</td></tr>
+        <tr><td>備考(スタッフ共有)</td><td>常時表示しておきたい申し送り。下に日付つきのメモを追記していけます</td></tr>
+        <tr><td>やり取りの履歴</td><td>アプリの問い合わせの直近と、電話・口頭で受けた内容の記録</td></tr>
+        <tr><td>利用履歴</td><td>月ごとの利用日数・合計時間・請求額</td></tr>
+        <tr><td>変更の記録</td><td>その子について管理者が行った修正・区分変更の履歴</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <h3>メモ・申し送りの残し方</h3>
+    <ul>
+      <li><b>その日のこと</b>(欠席の連絡・お迎えの人が違うなど)→「日別利用者」の<b>修正</b>のメモ欄。出席簿に出ます。</li>
+      <li><b>ずっと気をつけること</b>(アレルギー・配慮事項・バスの降車場所など)→ 利用者マスタの<b>備考</b>。全スタッフが見る前提の欄です。</li>
+      <li><b>経緯として残したいこと</b>(相談の内容・伝えたこと)→ 備考の下の<b>日付つきメモ</b>、電話で受けたものは<b>電話・口頭の記録</b>へ。日付と入力したスタッフ名が自動で付きます。</li>
+    </ul>
+    <h3>会員区分の変更</h3>
+    <ul>
+      <li><b>保護者がアプリから申請した場合</b>: 利用者マスタの上部「会員区分の変更申請」に並びます。タブに未処理の件数バッジが出ます。内容を確認して「<b>承認</b>」を押すと、その月から区分と料金計算が切り替わり、保護者にも通知されます。相談が必要なら「保留」にして問い合わせでやり取りします。</li>
+      <li><b>電話で受けた場合</b>: 一覧から児童を開いて「<b>区分を変更</b>」。変更後の区分・利用曜日・適用開始月・受付経路と理由を入れて登録します(代理登録)。</li>
+      <li>どちらの場合も変更の記録が残り、適用開始月より前の確定済みの請求には影響しません。</li>
+    </ul>
+  </div>
+
+  <div class="card" style="max-width:680px">
     <h2>料金の計算ルール</h2>
     <p>レギュラー/準レギュラーは定額(月〜金)、土曜・休業日の利用はスポット(300円/30分)として自動加算します。延長(700円+おやつ300円 ※運用確認中)も自動計算。8月・3月のレギュラー/準レギュラー増額も自動です。</p>
     <p class="muted" style="margin-top:6px">※料金改定時は料金マスタの更新だけで全体に反映されます(実装時)。</p>
@@ -747,7 +1037,8 @@
     <h2>今後追加予定の機能</h2>
     <ul>
       <li>ログイン(保護者はメールのリンクから、パスワード不要の方式を予定)</li>
-      <li>ユーザー管理(家庭・児童の登録、会員区分の変更・入退会の処理)</li>
+      <li>職員アカウントの管理(スタッフごとのログインと権限。現在の「対応スタッフ」は選択式のモック)</li>
+      <li>利用者マスタの新規登録フォーム(入会手続き)とCSV出力</li>
     </ul>
   </div>
 </div>
@@ -1044,10 +1335,13 @@ function renderChat(elId, thread, me){
 }
 function updateBadges(){
   const pUnread = unreadFor(THREADS[0], "parent");
-  document.getElementById("chatDot").style.display = pUnread ? "inline" : "none";
+  document.getElementById("chatDot").style.display = pUnread ? "block" : "none";
   const aUnread = THREADS.reduce((s,t)=>s+unreadFor(t,"admin"), 0);
   const b = document.getElementById("inqBadge");
   b.textContent = aUnread; b.style.display = aUnread ? "inline-block" : "none";
+  const pending = MEMBER_REQS.filter(r => r.status === "申請中").length;
+  const rb = document.getElementById("reqBadge");
+  rb.textContent = pending; rb.style.display = pending ? "inline-block" : "none";
 }
 // 保護者側
 function showChat(){
@@ -1100,12 +1394,462 @@ function adminSend(){
   renderInqList(); updateBadges();
 }
 
+// ---------- 利用者マスタ(管理側の正データ) ----------
+// 定性情報・備考・やり取り・利用履歴を1レコードに集約。保護者側の表示もここを参照する
+const PLANS = {
+  "レギュラー":   { fee:"月〜金 13,000円/月(8月・3月は15,000円)" },
+  "準レギュラー": { fee:"週3日 10,000円/月(8月・3月は12,000円)" },
+  "スポット":     { fee:"300円/30分(使った分だけ)" },
+  "退会":         { fee:"翌月以降の申込みができなくなります" },
+};
+const MASTER = [
+  { key:"haruto", name:"はると", grade:"3年", family:"山田家", member:"レギュラー", since:"2024年4月", days:"月〜金",
+    bus:true, busStop:"日連入口", parent:"山田 花子(母)", tel:"090-XXXX-1234", tel2:"080-XXXX-5678(父・太郎)",
+    mail:"yamada@example.com", area:"日連", siblings:"—", joined:"2024-04-01(38期)", billing:"口座登録済み(引落)",
+    allergy:"なし", care:"人混みが苦手。行事の日は疲れやすく、早めのお迎えが望ましい",
+    pickup:"母・父・祖母(山田 春子)",
+    memo:"バスは日連入口で降車。祖母のお迎えは事前連絡あり。",
+    notes:[ {d:"7/21", by:"スタッフA", t:"祖母のお迎えについて母と確認。当日は身分証持参をお願いした。"},
+            {d:"5/12", by:"スタッフB", t:"雨の日はバスを使わず歩いて帰ることが多い。"} ],
+    calls:[ {d:"4/7 17:10", by:"スタッフB", t:"母より電話。翌日の退室を16:00→16:30へ変更。"} ],
+    thread:0,
+    hist:[["2026年4月","申込み中",19,"—","概算 ¥17,500"],["2026年3月","確定",16,"36.5h","¥15,000"],["2026年2月","確定",18,"40.0h","¥13,000"]] },
+  { key:"souta", name:"そうた", grade:"1年", family:"佐藤家", member:"レギュラー", since:"2026年4月", days:"月〜金",
+    bus:false, busStop:"—", parent:"佐藤 美咲(母)", tel:"090-XXXX-2233", tel2:"—",
+    mail:"sato@example.com", area:"名倉", siblings:"—", joined:"2026-04-01(40期)", billing:"口座登録済み(引落)",
+    allergy:"乳製品(相談中)", care:"入学したばかり。お迎えは基本14:30",
+    pickup:"母・父",
+    memo:"おやつの乳製品対応を確認中(問い合わせスレッド参照)。",
+    notes:[ {d:"7/22", by:"スタッフA", t:"アレルギー対応の相談あり。おやつの内容を確認して回答予定。"} ],
+    calls:[],
+    thread:1,
+    hist:[["2026年4月","申込み中",18,"—","概算 ¥15,000"],["2026年3月","—",0,"—","—"],["2026年2月","—",0,"—","—"]] },
+  { key:"hana", name:"はな", grade:"1年", family:"田中家", member:"準レギュラー", since:"2026年4月", days:"月・水・金",
+    bus:true, busStop:"牧野", parent:"田中 里美(母)", tel:"090-XXXX-3344", tel2:"—",
+    mail:"tanaka@example.com", area:"牧野", siblings:"—", joined:"2026-04-01(40期)", billing:"口座登録済み(引落)",
+    allergy:"なし", care:"バス通学。乗り遅れが心配なので出発5分前に声かけ",
+    pickup:"母・祖父(田中 誠)",
+    memo:"入学式の翌日から利用開始。",
+    notes:[],
+    calls:[ {d:"7/18 9:30", by:"スタッフA", t:"母より電話。5月からレギュラーへ変更希望(申請を代理登録)。"} ],
+    thread:null,
+    hist:[["2026年4月","申込み中",12,"—","概算 ¥10,000"],["2026年3月","—",0,"—","—"],["2026年2月","—",0,"—","—"]] },
+  { key:"yuzuki", name:"ゆずき", grade:"2年", family:"鈴木家", member:"スポット", since:"2025年4月", days:"不定期",
+    bus:false, busStop:"—", parent:"鈴木 亮(父)", tel:"090-XXXX-4455", tel2:"080-XXXX-9900(母・恵)",
+    mail:"suzuki@example.com", area:"吉野", siblings:"—", joined:"2025-04-01(39期)", billing:"口座登録済み(引落)",
+    allergy:"そば", care:"—",
+    pickup:"父・母",
+    memo:"父の勤務シフト次第で前日変更が多い。電話連絡が中心。",
+    notes:[ {d:"6/30", by:"スタッフC", t:"前日変更が続くため、変更は前日15時までにお願いしたい旨を口頭で伝えた。"} ],
+    calls:[ {d:"4/7 17:10", by:"スタッフB", t:"父より電話。翌日の退室を16:00→16:30へ変更。"} ],
+    thread:null,
+    hist:[["2026年4月","申込み中",8,"—","概算 ¥9,600"],["2026年3月","確定",6,"14.0h","¥8,400"],["2026年2月","確定",9,"20.0h","¥12,000"]] },
+  { key:"koharu", name:"こはる", grade:"3年", family:"高橋家", member:"スポット", since:"2024年9月", days:"不定期",
+    bus:false, busStop:"—", parent:"高橋 直子(母)", tel:"090-XXXX-5566", tel2:"—",
+    mail:"takahashi@example.com", area:"日連", siblings:"—", joined:"2024-09-01(38期)", billing:"口座登録済み(引落)",
+    allergy:"なし", care:"体調を崩しやすく、当日キャンセルが出やすい",
+    pickup:"母",
+    memo:"当日キャンセルは電話。母の職場からの連絡が多い。",
+    notes:[],
+    calls:[ {d:"4/8 8:40", by:"スタッフA", t:"母より電話。発熱のため本日キャンセル。"} ],
+    thread:null,
+    hist:[["2026年4月","申込み中",5,"—","概算 ¥6,000"],["2026年3月","確定",7,"16.5h","¥9,900"],["2026年2月","確定",4,"9.0h","¥5,400"]] },
+  { key:"riku", name:"りく", grade:"4年", family:"伊藤家", member:"レギュラー", since:"2023年4月", days:"月〜金",
+    bus:true, busStop:"名倉入口", parent:"伊藤 健(父)", tel:"090-XXXX-6677", tel2:"080-XXXX-1122(母・彩)",
+    mail:"ito@example.com", area:"名倉", siblings:"—", joined:"2023-04-01(37期)", billing:"口座登録済み(引落)",
+    allergy:"なし", care:"延長保育の利用が多い。18:30お迎えが基本",
+    pickup:"父・母",
+    memo:"共働きのため延長が常態。おやつ代の加算について説明済み。",
+    notes:[ {d:"4/2", by:"スタッフA", t:"4月から週2〜3回の延長を予定と父から連絡。"} ],
+    calls:[],
+    thread:null,
+    hist:[["2026年4月","申込み中",20,"—","概算 ¥22,800"],["2026年3月","確定",19,"48.0h","¥18,000"],["2026年2月","確定",18,"44.5h","¥16,000"]] },
+];
+const M = k => MASTER.find(m => m.key === k);
+
+// 会員区分の変更申請(保護者からの申請 / 管理者の代理登録)
+let MEMBER_REQS = [
+  { key:"hana", from:"準レギュラー", to:"レギュラー", days:"月〜金", start:"2026年9月",
+    reason:"母の勤務日数が増えるため", at:"7/18 9:30(電話・代理登録)", status:"承認済 7/18 スタッフA" },
+];
+// 誰がいつ何を変えたかの記録(強制修正・区分変更の両方が入る)
+let CHANGELOG = [
+  { when:"4/8 8:42", who:"スタッフA", target:"こはる(3年)", text:"本日を欠席に変更(電話受付・母より発熱の連絡)" },
+  { when:"4/7 17:10", who:"スタッフB", target:"ゆずき(2年)", text:"4/8 退室 16:00→16:30(電話受付・父より)" },
+  { when:"3/30 11:05", who:"スタッフA", target:"はな(1年)", text:"会員区分 準レギュラー→レギュラー(2026年9月から・電話受付)" },
+];
+
+// ---------- 会員区分の変更(保護者側) ----------
+const PLAN_KEYS = ["レギュラー","準レギュラー","スポット","退会"];
+const WEEKDAYS = ["月","火","水","木","金"];
+let reqPlan = null, reqDays = [];
+const ME = "haruto";  // デモ上のログインユーザー
+
+function renderMemberScreen(){
+  const m = M(ME);
+  document.getElementById("parentMemberLabel").textContent = m.member;
+  document.getElementById("curMemberName").textContent = m.member + "会員";
+  document.getElementById("curMemberFee").textContent = PLANS[m.member].fee;
+  // 申請中の表示
+  const pend = MEMBER_REQS.filter(r => r.key === ME);
+  document.getElementById("pendingReq").innerHTML = pend.length ? pend.map(r => {
+    const done = r.status.startsWith("承認済");
+    return `<div class="kbd-note" style="background:${done?"var(--green-soft)":"var(--kh-soft)"};color:${done?"var(--green)":"var(--kh-deep)"}">
+      ${done ? "承認されました" : "申請中"}: ${r.start}から <b>${r.to}</b>${r.days!=="—"?`(${r.days})`:""} ・ 申請 ${r.at}<br>
+      <span style="font-weight:400">${done ? r.status : "キンダーハウスが確認しています。承認されるとお知らせします。"}</span>
+    </div>`;
+  }).join("") : "";
+  // 区分チップ
+  document.getElementById("memberChips").innerHTML = PLAN_KEYS.map(p =>
+    `<div class="chip ${reqPlan===p?"sel":""}" onclick="pickPlan('${p}')">${p==="退会"?"退会する":p}</div>`).join("");
+  document.getElementById("fieldWeekdays").classList.toggle("hidden", reqPlan !== "準レギュラー");
+  document.getElementById("weekdayChips").innerHTML = WEEKDAYS.map(w =>
+    `<div class="chip ${reqDays.includes(w)?"sel":""}" onclick="pickWeekday('${w}')">${w}</div>`).join("");
+  // 履歴
+  const rows = [
+    ...MEMBER_REQS.filter(r=>r.key===ME).map(r =>
+      `<tr><td>${r.start}〜</td><td>${r.to}</td><td>${r.status.startsWith("承認済")?'<span class="badge green">承認済</span>':'<span class="badge blue">申請中</span>'}</td><td class="muted">${r.reason||"—"}</td></tr>`),
+    `<tr><td>2024年4月〜</td><td>レギュラー</td><td><span class="badge green">適用中</span></td><td class="muted">新規入会</td></tr>`,
+  ].join("");
+  document.getElementById("memberHistTable").innerHTML =
+    `<thead><tr><th>適用</th><th>区分</th><th>状態</th><th>メモ</th></tr></thead><tbody>${rows}</tbody>`;
+}
+function pickPlan(p){ reqPlan = p; renderMemberScreen(); }
+function pickWeekday(w){
+  if (reqDays.includes(w)) reqDays = reqDays.filter(x=>x!==w);
+  else if (reqDays.length >= 3) { showToast("準レギュラーは週3日までです"); return; }
+  else reqDays.push(w);
+  renderMemberScreen();
+}
+function submitMemberReq(){
+  if (!reqPlan) { alert("変更後の区分を選んでください"); return; }
+  if (reqPlan === "準レギュラー" && reqDays.length !== 3) { alert("利用する曜日を3日選んでください"); return; }
+  MEMBER_REQS.unshift({
+    key: ME, from: M(ME).member, to: reqPlan,
+    days: reqPlan==="準レギュラー" ? WEEKDAYS.filter(w=>reqDays.includes(w)).join("・") : "—",
+    start: document.getElementById("selStartMonth").value,
+    reason: document.getElementById("reqReason").value.trim() || "—",
+    at: "たった今", status: "申請中",
+  });
+  document.getElementById("reqReason").value = "";
+  reqPlan = null; reqDays = [];
+  renderMemberScreen(); renderReqTable(); updateBadges();
+  showToast("区分変更を申請しました(モック)");
+}
+function showMember(){
+  document.getElementById("parentApp").classList.add("hidden");
+  document.getElementById("submitBar").classList.add("hidden");
+  document.getElementById("parentMember").classList.remove("hidden");
+  renderMemberScreen(); window.scrollTo(0,0);
+}
+function closeMember(){ switchRole("parent"); }
+
+// ---------- 日別利用者(管理側・強制修正+メモ) ----------
+const STATES = ["確定","昨日変更","当日キャンセル","管理者修正","欠席"];
+const STATE_CLS = { "確定":"green", "昨日変更":"blue", "当日キャンセル":"red", "管理者修正":"orange", "欠席":"red" };
+let DAYROWS = [
+  { key:"souta",  state:"確定",         in:"下校後", out:"14:30", bus:false, memo:"" },
+  { key:"hana",   state:"確定",         in:"下校後", out:"15:30", bus:true,  memo:"入学式後より" },
+  { key:"yuzuki", state:"昨日変更",     in:"下校後", out:"16:30", bus:false, memo:"16:00→16:30(電話・父)" },
+  { key:"haruto", state:"確定",         in:"下校後", out:"16:30", bus:true,  memo:"" },
+  { key:"koharu", state:"当日キャンセル", in:"下校後", out:"—",    bus:false, memo:"電話連絡 8:40(発熱)" },
+  { key:"riku",   state:"確定",         in:"下校後", out:"18:30", bus:true,  memo:"延長保育" },
+];
+let editingRow = null, aeState = null, aeOutSel = null, aeViaSel = null;
+const VIA = ["電話","窓口","メール","スタッフ判断"];
+
+function renderDayTable(){
+  const rows = DAYROWS.map((r,i)=>{
+    const m = M(r.key);
+    return `<tr>
+      <td>${m.grade}</td><td>${m.name}</td><td>${m.member}</td>
+      <td>${r.in}</td><td>${r.out}</td><td>${r.bus?"🚌":"—"}</td>
+      <td><span class="badge ${STATE_CLS[r.state]}">${r.state}</span></td>
+      <td>${r.memo || '<span class="muted">—</span>'}</td>
+      <td><button class="out-btn" onclick="openAdminEdit(${i})">修正</button></td>
+    </tr>`;
+  }).join("");
+  document.getElementById("dayTable").innerHTML =
+    `<thead><tr><th>学年</th><th>名前</th><th>会員区分</th><th>入室</th><th>退室</th><th>バス</th><th>状態</th><th>メモ</th><th></th></tr></thead><tbody>${rows}</tbody>`;
+}
+function renderChangeLog(){
+  document.getElementById("changeLog").innerHTML = CHANGELOG.map(c =>
+    `<div class="log-item"><span class="when">${c.when}</span><div><span class="who">${c.who}</span> が <b>${c.target}</b> を修正 — ${c.text}</div></div>`
+  ).join("");
+}
+function openAdminEdit(i){
+  editingRow = i;
+  const r = DAYROWS[i], m = M(r.key);
+  document.getElementById("aeTitle").textContent = `4月8日(水) ${m.name}(${m.grade})`;
+  aeState = (r.state === "当日キャンセル" || r.state === "欠席") ? "欠席" : "利用する";
+  aeOutSel = r.out === "—" ? null : r.out;
+  aeViaSel = "電話";
+  document.getElementById("aeBus").checked = r.bus;
+  document.getElementById("aeMemo").value = r.memo;
+  renderAeChips();
+  document.getElementById("adminEditOverlay").classList.add("open");
+}
+function renderAeChips(){
+  document.getElementById("aeState").innerHTML = ["利用する","欠席"].map(s =>
+    `<div class="chip ${aeState===s?"sel":""}" onclick="pickAeState('${s}')">${s}</div>`).join("");
+  document.getElementById("aeOut").innerHTML = OUT_TIMES.map(t =>
+    `<div class="chip ${aeOutSel===t?"sel":""}" onclick="pickAeOut('${t}')">${t}</div>`).join("");
+  document.getElementById("aeVia").innerHTML = VIA.map(v =>
+    `<div class="chip ${aeViaSel===v?"sel":""}" onclick="pickAeVia('${v}')">${v}</div>`).join("");
+  const off = aeState === "欠席";
+  document.getElementById("aeOutField").classList.toggle("hidden", off);
+  document.getElementById("aeBusField").classList.toggle("hidden", off);
+}
+function pickAeState(s){ aeState = s; renderAeChips(); }
+function pickAeOut(t){ aeOutSel = t; renderAeChips(); }
+function pickAeVia(v){ aeViaSel = v; renderAeChips(); }
+function closeAdminEdit(){ document.getElementById("adminEditOverlay").classList.remove("open"); }
+function saveAdminEdit(){
+  const r = DAYROWS[editingRow], m = M(r.key);
+  const before = r.state === "当日キャンセル" ? "欠席" : r.out;
+  if (aeState === "欠席") { r.state = "当日キャンセル"; r.out = "—"; r.bus = false; }
+  else {
+    if (!aeOutSel) { alert("お迎え時間を選んでください"); return; }
+    r.out = aeOutSel; r.bus = document.getElementById("aeBus").checked; r.state = "管理者修正";
+  }
+  r.memo = document.getElementById("aeMemo").value.trim();
+  const staff = document.getElementById("aeStaff").value;
+  const after = aeState === "欠席" ? "欠席" : r.out;
+  CHANGELOG.unshift({ when:"たった今", who:staff, target:`${m.name}(${m.grade})`,
+    text:`4/8 ${before} → ${after}(${aeViaSel}受付)${r.memo?" / メモ: "+r.memo:""}` });
+  m.calls.unshift({ d:"たった今", by:staff, t:`${aeViaSel}受付。4/8 ${before} → ${after}。${r.memo}` });
+  closeAdminEdit(); renderDayTable(); renderChangeLog();
+  showToast("修正しました(記録に残ります)");
+}
+
+// ---------- 利用者マスタ(管理側) ----------
+let masterSel = null;
+function renderReqTable(){
+  const rows = MEMBER_REQS.map((r,i)=>{
+    const m = M(r.key);
+    const pending = r.status === "申請中";
+    return `<tr>
+      <td>${m.grade}</td><td>${m.name}</td><td>${m.family}</td>
+      <td>${r.from} → <b>${r.to}</b>${r.days!=="—"?`<div class="muted">${r.days}</div>`:""}</td>
+      <td>${r.start}から</td>
+      <td style="max-width:220px;white-space:normal">${r.reason}</td>
+      <td>${pending?'<span class="badge red">申請中</span>':'<span class="badge green">'+r.status+'</span>'}<div class="muted">${r.at}</div></td>
+      <td>${pending?`<button class="out-btn" onclick="approveReq(${i})">承認</button> <button class="out-btn" onclick="rejectReq(${i})">保留</button>`:""}</td>
+    </tr>`;
+  }).join("");
+  document.getElementById("reqTable").innerHTML =
+    `<thead><tr><th>学年</th><th>名前</th><th>家庭</th><th>変更内容</th><th>適用</th><th>理由</th><th>状態</th><th></th></tr></thead><tbody>${rows}</tbody>`;
+  document.getElementById("reqCard").style.display = MEMBER_REQS.length ? "block" : "none";
+}
+function approveReq(i){
+  const r = MEMBER_REQS[i], m = M(r.key);
+  m.member = r.to; m.since = r.start; if (r.days !== "—") m.days = r.days;
+  r.status = "承認済 スタッフA";
+  CHANGELOG.unshift({ when:"たった今", who:"スタッフA", target:`${m.name}(${m.grade})`,
+    text:`会員区分 ${r.from}→${r.to}(${r.start}から・申請を承認)` });
+  m.notes.unshift({ d:"たった今", by:"スタッフA", t:`区分変更を承認: ${r.from}→${r.to}(${r.start}から)` });
+  renderReqTable(); renderMasterList(); renderDayTable(); renderChangeLog(); updateBadges();
+  if (masterSel) renderMasterDetail();
+  if (r.key === ME) renderMemberScreen();
+  showToast("承認しました。保護者に通知されます(モック)");
+}
+function rejectReq(i){
+  MEMBER_REQS[i].status = "保留(要相談) スタッフA";
+  renderReqTable(); updateBadges();
+  showToast("保留にしました。問い合わせで相談してください(モック)");
+}
+function renderMasterList(){
+  const q = (document.getElementById("masterSearch").value || "").trim();
+  const list = MASTER.filter(m => !q || m.name.includes(q) || m.family.includes(q));
+  const rows = list.map(m => {
+    const unread = m.thread !== null ? unreadFor(THREADS[m.thread], "admin") : 0;
+    const care = m.allergy !== "なし" ? `<span class="badge orange">${m.allergy}</span> ` : "";
+    return `<tr onclick="openMaster('${m.key}')">
+      <td>${m.grade}</td><td><b>${m.name}</b></td><td>${m.family}</td>
+      <td>${m.member}<div class="muted">${m.days}</div></td>
+      <td>${m.bus?"🚌 "+m.busStop:"—"}</td>
+      <td>${m.tel}</td>
+      <td>${care}${unread?`<span class="badge red">未読 ${unread}</span>`:""}</td>
+      <td class="muted">${m.since}〜</td>
+    </tr>`;
+  }).join("");
+  document.getElementById("masterTable").innerHTML =
+    `<thead><tr><th>学年</th><th>名前</th><th>家庭</th><th>会員区分</th><th>バス</th><th>連絡先</th><th>注意</th><th>在籍</th></tr></thead><tbody>${rows}</tbody>`;
+}
+function openMaster(key){
+  masterSel = key;
+  document.getElementById("masterList").classList.add("hidden");
+  document.getElementById("masterDetail").classList.remove("hidden");
+  renderMasterDetail(); window.scrollTo(0,0);
+}
+function backToMasterList(){
+  masterSel = null;
+  document.getElementById("masterDetail").classList.add("hidden");
+  document.getElementById("masterList").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+function renderMasterDetail(){
+  const m = M(masterSel);
+  const kv = (k,v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
+  const notes = m.notes.length ? m.notes.map(n =>
+    `<div class="log-item"><span class="when">${n.d}</span><div><span class="who">${n.by}</span> ${n.t}</div></div>`).join("")
+    : `<p class="muted">まだメモはありません。</p>`;
+  const calls = m.calls.length ? m.calls.map(c =>
+    `<div class="log-item"><span class="when">${c.d}</span><div><span class="who">${c.by}</span> ${c.t}</div></div>`).join("")
+    : `<p class="muted">記録はありません。</p>`;
+  const chat = m.thread !== null
+    ? THREADS[m.thread].msgs.slice(-3).map(x =>
+        `<div class="log-item"><span class="when">${x.time}</span><div><span class="who">${x.from==="parent"?"保護者":"スタッフ"}</span> ${x.text}</div></div>`).join("")
+      + `<div class="add-row"><button class="out-btn" onclick="adminTab('inquiry');openThread(${m.thread})">問い合わせスレッドを開く</button></div>`
+    : `<p class="muted">アプリでのやり取りはまだありません。</p>`;
+  const hist = m.hist.map(h =>
+    `<tr><td>${h[0]}</td><td>${h[1]==="申込み中"?'<span class="badge blue">申込み中</span>':h[1]==="確定"?'<span class="badge green">確定</span>':'<span class="muted">—</span>'}</td>
+     <td class="num">${h[2]?h[2]+"日":"—"}</td><td class="num">${h[3]}</td><td class="num">${h[4]}</td></tr>`).join("");
+  const logs = CHANGELOG.filter(c => c.target === `${m.name}(${m.grade})`);
+  const logHTML = logs.length ? logs.map(c =>
+    `<div class="log-item"><span class="when">${c.when}</span><div><span class="who">${c.who}</span> ${c.text}</div></div>`).join("")
+    : `<p class="muted">修正の記録はありません。</p>`;
+
+  document.getElementById("masterDetail").innerHTML = `
+    <button class="manual-back" onclick="backToMasterList()">‹ 利用者一覧にもどる</button>
+    <div class="detail-head">
+      <h2>${m.name}(${m.grade})</h2>
+      <span class="badge blue">${m.member}</span>
+      <span class="muted">${m.family} ・ ${m.since}〜</span>
+      <span class="spacer"></span>
+      <button class="out-btn" onclick="openMemberEdit('${m.key}')">区分を変更</button>
+      <button class="out-btn" onclick="adminTab('invoice')">利用明細</button>
+    </div>
+
+    <div class="mstr-grid">
+      <div class="card">
+        <h2>基本情報</h2>
+        <table class="kv">
+          ${kv("家庭", m.family)}
+          ${kv("保護者", m.parent)}
+          ${kv("電話", m.tel)}
+          ${kv("第2連絡先", m.tel2)}
+          ${kv("メール", m.mail)}
+          ${kv("地区", m.area)}
+          ${kv("きょうだい", m.siblings)}
+          ${kv("入会", m.joined)}
+          ${kv("引落", m.billing)}
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>契約・利用条件</h2>
+        <table class="kv">
+          ${kv("会員区分", `<b>${m.member}</b> <span class="muted">${PLANS[m.member].fee}</span>`)}
+          ${kv("適用開始", m.since)}
+          ${kv("利用曜日", m.days)}
+          ${kv("バス", m.bus ? "利用あり(" + m.busStop + ")" : "利用なし")}
+          ${kv("お迎え可能", m.pickup)}
+          ${kv("アレルギー", m.allergy === "なし" ? "なし" : `<span class="badge orange">${m.allergy}</span>`)}
+          ${kv("配慮事項", m.care)}
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>備考(スタッフ共有)</h2>
+      <textarea class="memo-box" id="masterMemo">${m.memo}</textarea>
+      <div class="add-row" style="justify-content:flex-end">
+        <button class="out-btn" onclick="saveMasterMemo()">備考を保存</button>
+      </div>
+      <h2 style="margin-top:14px">日付つきメモ</h2>
+      ${notes}
+      <div class="add-row">
+        <input id="noteInput" placeholder="申し送り・気づいたことを記録(例: 今週は疲れ気味。早めのお迎えを提案)"
+          onkeydown="if(event.key==='Enter')addNote()">
+        <button class="out-btn" onclick="addNote()">追加</button>
+      </div>
+    </div>
+
+    <div class="mstr-grid">
+      <div class="card">
+        <h2>やり取りの履歴(アプリ)</h2>
+        ${chat}
+      </div>
+      <div class="card">
+        <h2>電話・口頭の記録</h2>
+        ${calls}
+        <div class="add-row">
+          <input id="callInput" placeholder="電話で受けた内容を記録" onkeydown="if(event.key==='Enter')addCall()">
+          <button class="out-btn" onclick="addCall()">追加</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>利用履歴</h2>
+      <div class="table-scroll">
+      <table class="grid">
+        <thead><tr><th>月</th><th>状態</th><th class="num">利用日数</th><th class="num">合計時間</th><th class="num">請求額</th></tr></thead>
+        <tbody>${hist}</tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>変更の記録</h2>
+      ${logHTML}
+    </div>`;
+}
+function saveMasterMemo(){
+  M(masterSel).memo = document.getElementById("masterMemo").value;
+  showToast("備考を保存しました");
+}
+function addNote(){
+  const el = document.getElementById("noteInput");
+  if (!el.value.trim()) return;
+  M(masterSel).notes.unshift({ d:"たった今", by:"スタッフA", t:el.value.trim() });
+  renderMasterDetail(); showToast("メモを追加しました");
+}
+function addCall(){
+  const el = document.getElementById("callInput");
+  if (!el.value.trim()) return;
+  M(masterSel).calls.unshift({ d:"たった今", by:"スタッフA", t:el.value.trim() });
+  renderMasterDetail(); showToast("記録を追加しました");
+}
+// 管理者による区分の直接変更(電話受付など)
+let meKey = null, mePlan = null;
+function openMemberEdit(key){
+  meKey = key; mePlan = M(key).member;
+  const m = M(key);
+  document.getElementById("meTitle").textContent = `会員区分の変更 — ${m.name}(${m.grade})`;
+  document.getElementById("meNow").textContent = `現在: ${m.member}(${m.since}〜 ${m.days})`;
+  document.getElementById("meDays").value = m.days;
+  document.getElementById("meReason").value = "";
+  renderMeChips();
+  document.getElementById("memberEditOverlay").classList.add("open");
+}
+function renderMeChips(){
+  document.getElementById("meChips").innerHTML = PLAN_KEYS.map(p =>
+    `<div class="chip ${mePlan===p?"sel":""}" onclick="pickMePlan('${p}')">${p==="退会"?"退会":p}</div>`).join("");
+}
+function pickMePlan(p){ mePlan = p; renderMeChips(); }
+function closeMemberEdit(){ document.getElementById("memberEditOverlay").classList.remove("open"); }
+function saveMemberEdit(){
+  const m = M(meKey), before = m.member;
+  const start = document.getElementById("meStart").value;
+  const reason = document.getElementById("meReason").value.trim() || "—";
+  m.member = mePlan; m.since = start; m.days = document.getElementById("meDays").value.trim() || m.days;
+  CHANGELOG.unshift({ when:"たった今", who:"スタッフA", target:`${m.name}(${m.grade})`,
+    text:`会員区分 ${before}→${mePlan}(${start}から) / ${reason}` });
+  m.notes.unshift({ d:"たった今", by:"スタッフA", t:`区分変更を登録: ${before}→${mePlan}(${start}から)。${reason}` });
+  closeMemberEdit(); renderMasterDetail(); renderMasterList(); renderDayTable(); renderChangeLog();
+  if (meKey === ME) renderMemberScreen();
+  showToast("会員区分を変更しました");
+}
+
 // ---------- 画面切替 ----------
 function switchRole(r){
   document.getElementById("manualParent").classList.add("hidden");
   document.getElementById("manualAdmin").classList.add("hidden");
   document.getElementById("parentChat").classList.add("hidden");
   document.getElementById("parentHistory").classList.add("hidden");
+  document.getElementById("parentMember").classList.add("hidden");
   document.getElementById("parentApp").classList.toggle("hidden", r!=="parent");
   document.getElementById("submitBar").classList.toggle("hidden", r!=="parent");
   document.getElementById("adminApp").classList.toggle("hidden", r!=="admin");
@@ -1119,6 +1863,7 @@ function showManual(which){
   document.getElementById("submitBar").classList.add("hidden");
   document.getElementById("parentChat").classList.add("hidden");
   document.getElementById("parentHistory").classList.add("hidden");
+  document.getElementById("parentMember").classList.add("hidden");
   document.getElementById("manualParent").classList.toggle("hidden", which!=="parent");
   document.getElementById("manualAdmin").classList.toggle("hidden", which!=="admin");
   window.scrollTo(0,0);
@@ -1126,7 +1871,7 @@ function showManual(which){
 function closeManual(which){ switchRole(which); }
 function adminTab(t){
   if (t === "inquiry") openThread(currentThread);
-  ["today","monthly","invoice","notice","inquiry","calendar"].forEach(x=>{
+  ["today","monthly","invoice","notice","inquiry","master","calendar"].forEach(x=>{
     document.getElementById("tab-"+x).classList.toggle("hidden", x!==t);
   });
   document.querySelectorAll(".admin-tabs button").forEach(b=>b.classList.toggle("active", b.dataset.tab===t));
@@ -1140,6 +1885,11 @@ function showToast(msg){
 }
 renderDays();
 renderActuals();
+renderDayTable();
+renderChangeLog();
+renderReqTable();
+renderMasterList();
+renderMemberScreen();
 renderInqList();
 renderChat("chatLogAdmin", THREADS[0], "admin");
 renderChat("chatLogParent", THREADS[0], "parent");
