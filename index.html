@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>キンダーハウス 利用予約システム(モックアップ)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* 学園公式サイト(steiner.ed.jp)準拠:
+     白地 + 水彩のピンク〜藤色 / 学童クラブのブランド色 #9d9dfc / Noto Sans JP / 本文 #333 */
+  :root {
+    --bg: #fdfdfe;
+    --card: #ffffff;
+    --ink: #333333;
+    --ink-soft: #8a8a92;
+    --line: #ececf2;
+    --kh: #9d9dfc;          /* 学童クラブ ブランド色(公式サイトより) */
+    --kh-deep: #8383ea;
+    --kh-soft: #f0f0fe;
+    --pink: #e895b4;        /* 学園サイトの水彩ピンク系 */
+    --pink-soft: #fcedf3;
+    --green: #7fae7e;
+    --green-soft: #ecf4ec;
+    --red: #d98a7c;
+    --red-soft: #faeae6;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.6;
+  }
+  /* 水彩のにじみ(公式サイトのセクション背景のトーン)をごく薄く */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(55% 40% at 10% 0%,  rgba(232, 149, 180, .10), transparent 70%),
+      radial-gradient(50% 38% at 90% 8%,  rgba(157, 157, 252, .10), transparent 70%),
+      radial-gradient(50% 40% at 50% 100%, rgba(157, 157, 252, .06), transparent 70%);
+  }
+  .demo-bar {
+    background: #fff; color: var(--ink); padding: 8px 16px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    position: sticky; top: 0; z-index: 100;
+    border-bottom: 1px solid var(--line);
+  }
+  /* 上端に水彩の虹ストライプ */
+  .demo-bar::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #f2b9cf, #f5d4a8, #cfe3b8, #b5d6ef, #c7c7f7);
+  }
+  .demo-bar .tag { font-size: 11px; background: var(--kh-soft); color: var(--kh-deep); padding: 2px 10px; border-radius: 10px; font-weight: 700; }
+  .demo-bar button {
+    background: #fff; color: var(--ink-soft); border: 1px solid var(--line);
+    padding: 4px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; font-family: inherit;
+  }
+  .demo-bar button.active { background: var(--kh); color: #fff; border-color: var(--kh); font-weight: 700; }
+
+  .app { max-width: 480px; margin: 0 auto; padding: 16px 12px 96px; }
+  .app.wide { max-width: 960px; }
+
+  header.app-head { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 16px; }
+  .app-head .brand .kicker { font-size: 11px; color: var(--kh-deep); font-weight: 700; letter-spacing: .15em; }
+  .app-head h1 { font-size: 19px; font-weight: 700; }
+  .app-head .user { font-size: 12px; color: var(--ink-soft); text-align: right; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(120, 120, 180, .05);
+  }
+  /* 見出しは公式サイトの「利用時間」「利用料金」ピルに寄せる */
+  .card h2 {
+    display: inline-block; font-size: 13px; font-weight: 700;
+    background: var(--kh); color: #fff; border-radius: 20px;
+    padding: 3px 16px; margin-bottom: 12px; letter-spacing: .05em;
+  }
+  .muted { color: var(--ink-soft); font-size: 12.5px; }
+
+  .badge { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 10px; font-weight: 600; }
+  .badge.green { background: var(--green-soft); color: var(--green); }
+  .badge.red { background: var(--red-soft); color: var(--red); }
+  .badge.blue { background: var(--kh-soft); color: var(--kh-deep); }
+  .badge.orange { background: var(--pink-soft); color: var(--pink); }
+
+  /* ---- お知らせ ---- */
+  .notice { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .notice:last-child { border-bottom: none; padding-bottom: 0; }
+  .notice .date { font-size: 11px; color: var(--ink-soft); white-space: nowrap; padding-top: 3px; }
+  .notice .title { font-weight: 700; font-size: 13.5px; }
+  .notice .body { font-size: 12.5px; color: var(--ink-soft); }
+  .notice.unread .title::before { content: "●"; color: var(--pink); font-size: 9px; margin-right: 5px; vertical-align: 2px; }
+
+  /* ---- お知らせストリップ(1行) ---- */
+  .notice-strip {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff; border: 1px solid var(--line); border-radius: 24px;
+    padding: 8px 14px; margin-bottom: 16px; font-size: 12.5px; cursor: pointer;
+  }
+  .notice-strip .ndot { color: var(--pink); font-size: 9px; }
+  .notice-strip .ntext { flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .notice-strip .nmore { color: var(--ink-soft); white-space: nowrap; }
+
+  /* ---- 月ナビ ---- */
+  .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .month-nav .mtitle { font-size: 18px; font-weight: 700; }
+  .month-nav .msub { font-size: 11px; color: var(--ink-soft); }
+  .month-nav button { background: #fff; border: 1px solid var(--line); border-radius: 50%; width: 34px; height: 34px; cursor: pointer; color: var(--kh-deep); font-size: 15px; }
+
+  /* ---- 下書きヒント(控えめな1行) ---- */
+  .draft-hint { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 11.5px; color: var(--ink-soft); margin: 0 4px 8px; }
+  .draft-hint button { background: none; border: none; color: var(--kh-deep); font-weight: 700; font-size: 11.5px; cursor: pointer; text-decoration: underline; font-family: inherit; padding: 0; }
+
+  /* ---- 日リスト ---- */
+  .day-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px 12px; margin-bottom: 5px; cursor: pointer;
+  }
+  .day-row:not(.closed):not(.locked):hover { border-color: #d5d5f5; }
+  .day-row.closed {
+    background: transparent; border: none; box-shadow: none; cursor: default;
+    padding: 2px 12px; opacity: .5;
+  }
+  .day-row.closed .day-date .d { font-size: 13px; }
+  .day-row.closed .day-time .none { font-size: 12px; }
+  .day-row.sat { border-left: 3px solid var(--pink); }
+  .day-row.applied { border-left: 3px solid var(--green); }
+  .day-row.draft { border-left: 3px dashed rgba(157,157,252,.65); }
+  .day-row.locked { background: #f7f7fa; cursor: default; }
+  .day-date { width: 46px; text-align: center; flex-shrink: 0; display: flex; align-items: baseline; justify-content: center; gap: 3px; }
+  .day-date .d { font-size: 16px; font-weight: 700; }
+  .day-date .w { font-size: 11px; color: var(--ink-soft); }
+  .day-date .w.sat { color: var(--kh-deep); } .day-date .w.sun { color: var(--pink); }
+  .day-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+  .day-event { font-size: 11px; color: var(--pink); font-weight: 700; white-space: nowrap; }
+  .day-time { font-size: 14px; font-weight: 700; }
+  .day-time .none { color: #c4c4d0; font-weight: 400; font-size: 13px; }
+  .chev { color: #c9c9dc; font-size: 15px; }
+  .locked-note { font-size: 10.5px; color: var(--ink-soft); white-space: nowrap; }
+
+  /* ---- 入力シート(モーダル) ---- */
+  .sheet-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(90, 90, 140, .35); z-index: 200;
+    align-items: flex-end; justify-content: center;
+  }
+  .sheet-overlay.open { display: flex; }
+  .sheet {
+    background: var(--card); width: 100%; max-width: 480px;
+    border-radius: 16px 16px 0 0; padding: 20px 16px 28px;
+  }
+  .sheet h3 { font-size: 16px; margin-bottom: 4px; }
+  .sheet .ev { color: var(--pink); font-size: 12.5px; font-weight: 700; margin-bottom: 12px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 6px; color: var(--ink-soft); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    border: 1px solid var(--line); background: #fff; border-radius: 20px;
+    padding: 7px 14px; font-size: 14px; cursor: pointer;
+  }
+  .chip.sel { background: var(--kh); border-color: var(--kh); color: #fff; font-weight: 700; }
+  select.time-sel { font-size: 16px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); font-family: inherit; }
+  .toggle-row { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .toggle-row input { transform: scale(1.3); accent-color: var(--kh); }
+  .sheet-btns { display: flex; gap: 10px; margin-top: 18px; }
+  .btn {
+    flex: 1; padding: 12px; border-radius: 24px; font-size: 15px; font-weight: 700; cursor: pointer; border: none; font-family: inherit;
+  }
+  .btn.primary { background: var(--kh); color: #fff; }
+  .btn.ghost { background: #fff; border: 1px solid var(--line); color: var(--ink-soft); }
+  .btn.danger-link { background: none; border: none; color: var(--red); font-size: 13px; font-weight: 700; margin-top: 14px; width: 100%; cursor: pointer; }
+
+  /* ---- 送信バー ---- */
+  .submit-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+    background: linear-gradient(transparent, var(--bg) 40%); padding: 20px 12px 16px;
+    display: flex; justify-content: center;
+  }
+  .submit-bar .inner {
+    width: 100%; max-width: 456px; display: flex; align-items: center; gap: 12px;
+    background: #fff; color: var(--ink); border-radius: 16px; padding: 12px 16px;
+    box-shadow: 0 4px 20px rgba(110, 110, 190, .18); border: 1px solid var(--line);
+  }
+  .submit-bar .sum { flex: 1; font-size: 12px; color: var(--ink-soft); }
+  .submit-bar .sum b { font-size: 15px; color: var(--ink); }
+  .submit-bar button { background: var(--kh); color: #fff; border: none; border-radius: 24px; padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+  /* ---- 管理画面 ---- */
+  .admin-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .admin-tabs button {
+    background: #fff; border: 1px solid var(--line); border-radius: 20px;
+    padding: 7px 16px; font-size: 13px; cursor: pointer; color: var(--ink-soft); font-family: inherit;
+  }
+  .admin-tabs button.active { background: var(--kh); color: #fff; border-color: var(--kh); font-weight: 700; }
+  table.grid { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.grid th, table.grid td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+  table.grid th { font-size: 11.5px; color: var(--ink-soft); font-weight: 700; background: #f8f8fc; }
+  table.grid td.num, table.grid th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .table-scroll { overflow-x: auto; }
+  .stat-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .stat {
+    flex: 1; min-width: 130px; background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 14px 16px; box-shadow: 0 2px 10px rgba(120,120,180,.05);
+  }
+  .stat .k { font-size: 12px; color: var(--ink-soft); }
+  .stat .v { font-size: 24px; font-weight: 700; margin-top: 2px; }
+  .stat .v small { font-size: 13px; font-weight: 400; color: var(--ink-soft); }
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .toolbar select, .toolbar input[type=date] {
+    padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13.5px; color: var(--ink); font-family: inherit;
+  }
+  .toolbar .spacer { flex: 1; }
+  .toolbar .out-btn { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; color: var(--kh-deep); font-weight: 700; font-family: inherit; }
+
+  /* 明細プレビュー */
+  .invoice {
+    background: #fff; border: 1px solid var(--line); border-radius: 4px;
+    padding: 32px 36px; max-width: 640px; margin: 0 auto;
+    box-shadow: 0 2px 12px rgba(110, 110, 190, .10); font-size: 13px;
+  }
+  .invoice h3 { text-align: center; font-size: 17px; letter-spacing: .2em; margin-bottom: 20px; }
+  .invoice .inv-head { display: flex; justify-content: space-between; margin-bottom: 18px; }
+  .invoice table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  .invoice th, .invoice td { border: 1px solid #d9d9e8; padding: 5px 8px; }
+  .invoice th { background: #f4f4fb; font-weight: 600; font-size: 12px; }
+  .invoice .total-line { text-align: right; font-size: 15px; }
+  .invoice .total-line b { font-size: 19px; margin-left: 8px; }
+
+  textarea.notice-input { width: 100%; min-height: 90px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-size: 14px; font-family: inherit; }
+  input.notice-title { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; font-size: 14px; margin-bottom: 8px; font-family: inherit; }
+
+  /* ---- マニュアル ---- */
+  .help-btn {
+    background: none; border: none; color: var(--kh-deep); font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit; text-decoration: underline; padding: 0; margin-top: 2px;
+  }
+  .manual-back {
+    background: #fff; border: 1px solid var(--line); border-radius: 20px;
+    padding: 6px 16px; font-size: 13px; cursor: pointer; color: var(--kh-deep); font-weight: 700;
+    font-family: inherit; margin-bottom: 14px;
+  }
+  .manual h3 { font-size: 14px; margin: 14px 0 6px; color: var(--kh-deep); }
+  .manual p, .manual li { font-size: 13.5px; }
+  .manual ol.steps { padding-left: 0; list-style: none; counter-reset: step; margin: 8px 0; }
+  .manual ol.steps li {
+    counter-increment: step; position: relative; padding: 5px 0 5px 32px;
+  }
+  .manual ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 8px; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--kh-soft); color: var(--kh-deep); font-weight: 700; font-size: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .manual ul { padding-left: 20px; margin: 6px 0; }
+  .manual table.grid td, .manual table.grid th { white-space: normal; }
+  .legend-sample { pointer-events: none; margin: 6px 0; }
+  .kbd-note { background: var(--pink-soft); border-radius: 8px; padding: 8px 12px; font-size: 12.5px; color: #c86e93; margin: 8px 0; }
+
+  .hidden { display: none !important; }
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: var(--kh-deep); color: #fff; padding: 10px 22px; border-radius: 24px;
+    font-size: 13.5px; font-weight: 700; opacity: 0; transition: opacity .3s; z-index: 300; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <span class="tag">モックアップ</span>
+  <span style="font-size:13px;">キンダーハウス予約システム</span>
+  <span style="flex:1"></span>
+  <button id="roleParent" class="active" onclick="switchRole('parent')">保護者画面</button>
+  <button id="roleAdmin" onclick="switchRole('admin')">管理者画面</button>
+</div>
+
+<!-- ==================== 保護者画面 ==================== -->
+<div class="app" id="parentApp">
+  <header class="app-head">
+    <div class="brand">
+      <div class="kicker">学童クラブ</div>
+      <h1>キンダーハウス</h1>
+    </div>
+    <div class="user">山田家<br><b>はると</b>(3年)・レギュラー会員<br><button class="help-btn" onclick="showManual('parent')">使い方ガイド</button></div>
+  </header>
+
+  <div class="notice-strip" onclick="showToast('お知らせ一覧(モック)')">
+    <span class="ndot">●</span>
+    <span class="ntext">4月の申込み締切は 3/5 です</span>
+    <span class="nmore">ほか1件 ›</span>
+  </div>
+
+  <div class="month-nav">
+    <button>‹</button>
+    <div style="text-align:center">
+      <div class="mtitle">2026年4月</div>
+      <div class="msub">締切 3/5 ・以降も前日15時まで変更できます</div>
+    </div>
+    <button>›</button>
+  </div>
+
+  <div class="draft-hint" id="draftHint">3月と同じパターンで下書き済み <button onclick="clearDrafts()">クリア</button></div>
+
+  <div id="dayList"></div>
+
+  <div class="submit-bar" id="submitBar">
+    <div class="inner">
+      <div class="sum"><b id="sumDays">0日</b> 利用予定<br><span id="sumEst"></span></div>
+      <button onclick="submitAll()">申込みを送信</button>
+    </div>
+  </div>
+</div>
+
+<!-- 入力シート -->
+<div class="sheet-overlay" id="sheetOverlay" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet">
+    <h3 id="sheetTitle">4月6日(月)</h3>
+    <div class="ev" id="sheetEvent"></div>
+    <div class="field" id="fieldIn">
+      <label>入室時間(土曜・休業日のみ ※7時台は早朝保育 700円/回)</label>
+      <select class="time-sel" id="selIn">
+        <option>7:00</option><option>7:30</option><option>8:00</option><option>8:30</option><option>9:00</option><option>9:30</option><option>10:00</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>お迎え(退室)時間 ※18時以降は延長保育 700円/回+おやつ代300円</label>
+      <div class="chips" id="outChips"></div>
+    </div>
+    <div class="field">
+      <div class="toggle-row"><input type="checkbox" id="chkBus"><label for="chkBus" style="margin:0;font-size:14px;color:var(--ink)">帰りにバスを利用する</label></div>
+    </div>
+    <div class="sheet-btns">
+      <button class="btn ghost" onclick="closeSheet()">閉じる</button>
+      <button class="btn primary" onclick="saveDay()">この日を保存</button>
+    </div>
+    <button class="btn danger-link" id="btnCancelDay" onclick="cancelDay()">この日の利用をキャンセルする</button>
+  </div>
+</div>
+
+<!-- ==================== 管理者画面 ==================== -->
+<div class="app wide hidden" id="adminApp">
+  <header class="app-head">
+    <div class="brand">
+      <div class="kicker">学童クラブ</div>
+      <h1>キンダーハウス 管理</h1>
+    </div>
+    <div class="user">管理者: スタッフA<br><button class="help-btn" onclick="showManual('admin')">管理マニュアル</button></div>
+  </header>
+
+  <div class="admin-tabs">
+    <button class="active" data-tab="today" onclick="adminTab('today')">日別利用者</button>
+    <button data-tab="monthly" onclick="adminTab('monthly')">月次集計</button>
+    <button data-tab="invoice" onclick="adminTab('invoice')">利用明細</button>
+    <button data-tab="notice" onclick="adminTab('notice')">お知らせ配信</button>
+    <button data-tab="calendar" onclick="adminTab('calendar')">学園カレンダー設定</button>
+  </div>
+
+  <!-- 日別 -->
+  <div id="tab-today">
+    <div class="stat-row">
+      <div class="stat"><div class="k">今日(4/8)の利用</div><div class="v">14<small> 名</small></div></div>
+      <div class="stat"><div class="k">うちバス利用</div><div class="v">5<small> 名</small></div></div>
+      <div class="stat"><div class="k">直前変更(24h以内)</div><div class="v" style="color:var(--red)">2<small> 件</small></div></div>
+    </div>
+    <div class="card">
+      <div class="toolbar">
+        <input type="date" value="2026-04-08">
+        <span class="badge orange">入学式</span>
+        <span class="spacer"></span>
+        <button class="out-btn">出席簿を印刷</button>
+        <button class="out-btn">CSV</button>
+      </div>
+      <div class="table-scroll">
+      <table class="grid">
+        <thead><tr><th>学年</th><th>名前</th><th>会員区分</th><th>入室</th><th>退室</th><th>バス</th><th>状態</th><th>メモ</th></tr></thead>
+        <tbody>
+          <tr><td>1年</td><td>そうた</td><td>レギュラー</td><td>下校後</td><td>14:30</td><td>—</td><td><span class="badge green">確定</span></td><td></td></tr>
+          <tr><td>1年</td><td>はな</td><td>準レギュラー</td><td>下校後</td><td>15:30</td><td>🚌</td><td><span class="badge green">確定</span></td><td>入学式後より</td></tr>
+          <tr><td>2年</td><td>ゆずき</td><td>スポット</td><td>下校後</td><td>16:30</td><td>—</td><td><span class="badge blue">昨日変更</span></td><td>16:00→16:30</td></tr>
+          <tr><td>3年</td><td>はると</td><td>レギュラー</td><td>下校後</td><td>16:30</td><td>🚌</td><td><span class="badge green">確定</span></td><td></td></tr>
+          <tr><td>3年</td><td>こはる</td><td>スポット</td><td>下校後</td><td>—</td><td>—</td><td><span class="badge red">当日キャンセル</span></td><td>電話連絡 8:40</td></tr>
+          <tr><td>4年</td><td>りく</td><td>レギュラー</td><td>下校後</td><td>18:30</td><td>🚌</td><td><span class="badge green">確定</span></td><td>延長保育</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 月次集計 -->
+  <div id="tab-monthly" class="hidden">
+    <div class="card">
+      <div class="toolbar">
+        <select><option>2026年4月</option><option>2026年3月</option></select>
+        <span class="muted">締め処理前(申込みからリアルタイム集計)</span>
+        <span class="spacer"></span>
+        <button class="out-btn">この月を締める</button>
+        <button class="out-btn">CSV(銀行引落用)</button>
+      </div>
+      <div class="table-scroll">
+      <table class="grid">
+        <thead><tr><th>学年</th><th>名前</th><th>会員区分</th><th class="num">利用日数</th><th class="num">延長</th><th class="num">早朝</th><th class="num">スポット利用</th><th class="num">当月請求</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>1年</td><td>そうた</td><td>レギュラー</td><td class="num">18日</td><td class="num">2回</td><td class="num">0回</td><td class="num">—</td><td class="num">¥15,000</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
+          <tr><td>1年</td><td>はな</td><td>準レギュラー</td><td class="num">12日</td><td class="num">0回</td><td class="num">1回</td><td class="num">—</td><td class="num">¥10,700</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
+          <tr><td>3年</td><td>はると</td><td>レギュラー</td><td class="num">16日</td><td class="num">1回</td><td class="num">0回</td><td class="num">7.5h(土)</td><td class="num">¥18,500</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
+          <tr><td>4年</td><td>りく</td><td>スポット</td><td class="num">20日</td><td class="num">3回</td><td class="num">0回</td><td class="num">33.0h</td><td class="num">¥22,800</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
+        </tbody>
+        <tfoot><tr style="font-weight:700"><td colspan="3">合計 (24名)</td><td class="num">312日</td><td class="num">18回</td><td class="num">6回</td><td class="num">96h</td><td class="num">¥298,400</td><td></td></tr></tfoot>
+      </table>
+      </div>
+      <p class="muted" style="margin-top:10px">※料金は公式サイト掲載(2026-07時点)の料金表で計算: レギュラー13,000円/月(8・3月は15,000円)、準レギュラー10,000円/月、スポット300円/30分、延長700円/回+おやつ代300円、早朝700円/回。実装時は年度改定に備えて料金マスタ化。</p>
+    </div>
+  </div>
+
+  <!-- 明細 -->
+  <div id="tab-invoice" class="hidden">
+    <div class="toolbar" style="max-width:640px;margin:0 auto 12px;">
+      <select><option>はると(3年)</option></select>
+      <select><option>2026年4月</option></select>
+      <span class="spacer"></span>
+      <button class="out-btn">PDF出力</button>
+      <button class="out-btn">全員分を一括PDF</button>
+    </div>
+    <div class="invoice">
+      <h3>ご 利 用 明 細 書</h3>
+      <div class="inv-head">
+        <div>山田 様<br><span class="muted">お子さま: はると(3年)・レギュラー会員</span></div>
+        <div style="text-align:right">2026年4月分<br><span class="muted">発行日: 2026-05-01<br>学童クラブ キンダーハウス</span></div>
+      </div>
+      <table>
+        <thead><tr><th>項目</th><th>日付</th><th>時間</th><th>単価</th><th>金額</th></tr></thead>
+        <tbody>
+          <tr><td>基本保育料(レギュラー・月〜金)</td><td>—</td><td>放課後〜18:00</td><td>月額</td><td style="text-align:right">13,000</td></tr>
+          <tr><td>土曜保育(スポット)</td><td>4/11(土)</td><td>8:30〜16:00 (7.5h)</td><td>300円/30分</td><td style="text-align:right">4,500</td></tr>
+          <tr><td>延長保育</td><td>4/16(木)</td><td>18:00〜18:30</td><td>700円/回</td><td style="text-align:right">700</td></tr>
+          <tr><td>おやつ代(延長時)</td><td>4/16(木)</td><td>—</td><td>300円/回</td><td style="text-align:right">300</td></tr>
+        </tbody>
+      </table>
+      <div class="total-line">合計 <b>¥18,500</b></div>
+      <p class="muted" style="margin-top:14px">上記金額を 5月27日 にご登録の口座より引き落としいたします。</p>
+    </div>
+  </div>
+
+  <!-- お知らせ -->
+  <div id="tab-notice" class="hidden">
+    <div class="card" style="max-width:640px">
+      <h2>新しいお知らせを配信</h2>
+      <div>
+      <input class="notice-title" placeholder="タイトル(例: 5月の申込み受付を開始しました)">
+      <textarea class="notice-input" placeholder="本文…"></textarea>
+      <div class="toolbar" style="margin-top:10px">
+        <label class="toggle-row" style="font-size:13px"><input type="checkbox" checked> アプリ内に表示</label>
+        <label class="toggle-row" style="font-size:13px"><input type="checkbox" checked> メールでも通知</label>
+        <span class="spacer"></span>
+        <button class="out-btn" onclick="showToast('お知らせを配信しました(モック)')">配信する</button>
+      </div>
+      </div>
+    </div>
+    <div class="card" style="max-width:640px">
+      <h2>配信履歴</h2>
+      <div class="notice"><div class="date">3/28</div><div><div class="title">4月の申込み締切は 3/5 です</div><div class="body">既読 21/24家庭</div></div></div>
+      <div class="notice"><div class="date">3/20</div><div><div class="title">4/4(土)は大掃除です</div><div class="body">既読 24/24家庭</div></div></div>
+    </div>
+  </div>
+
+  <!-- カレンダー設定 -->
+  <div id="tab-calendar" class="hidden">
+    <div class="card" style="max-width:640px">
+      <h2>2026年4月 の日区分設定</h2>
+      <p class="muted" style="margin-bottom:10px">ここで設定した区分が保護者の申込み画面にそのまま反映されます(「◯日は土曜日です」のような毎月の設問手作りが不要になります)。学園の年間スケジュールに連動。</p>
+      <div class="table-scroll">
+      <table class="grid">
+        <thead><tr><th>日付</th><th>区分</th><th>行事名</th><th>保護者入力</th></tr></thead>
+        <tbody>
+          <tr><td>4/4(土)</td><td><span class="badge blue">土曜保育</span></td><td>大掃除</td><td>入室+退室</td></tr>
+          <tr><td>4/6(月)</td><td><span class="badge orange">短縮</span></td><td>始業日</td><td>退室のみ</td></tr>
+          <tr><td>4/8(水)</td><td><span class="badge orange">短縮</span></td><td>入学式</td><td>退室のみ</td></tr>
+          <tr><td>4/25(土)</td><td><span class="badge blue">土曜保育</span></td><td>6年 3校合同オリンピック</td><td>入室+退室</td></tr>
+          <tr><td>4/29(水)</td><td><span class="badge red">休園</span></td><td>昭和の日</td><td>—</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 保護者向けマニュアル ==================== -->
+<div class="app manual hidden" id="manualParent">
+  <button class="manual-back" onclick="closeManual('parent')">‹ 申込み画面にもどる</button>
+  <header class="app-head">
+    <div class="brand">
+      <div class="kicker">学童クラブ キンダーハウス</div>
+      <h1>使い方ガイド(保護者向け)</h1>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2>このアプリでできること</h2>
+    <p>月ごとの利用申込み・変更・キャンセルと、キンダーハウスからのお知らせの受け取りができます。毎月の紙やフォームでのやり取りはこのアプリに一本化されます。</p>
+    <p class="muted" style="margin-top:6px">※ログイン・アカウント管理の機能は今後追加予定です。</p>
+  </div>
+
+  <div class="card">
+    <h2>毎月の申込みの流れ</h2>
+    <ol class="steps">
+      <li>画面を開くと、翌月のカレンダーに<b>先月と同じ利用パターンが下書き</b>として入っています(左端が藤色の点線の日)。</li>
+      <li>変えたい日を<b>タップ</b>して、お迎え時間を選びます。土曜日・学校休業日は入室時間も選びます。バス利用はスイッチでONに。</li>
+      <li>利用しない月や白紙から入れたいときは、リスト右上の「<b>クリア</b>」で下書きを消せます。</li>
+      <li>最後に画面下の「<b>申込みを送信</b>」を押して完了。送信前の概算料金も下に表示されます。</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>カレンダーの見方</h2>
+    <div class="legend-sample">
+      <div class="day-row draft"><div class="day-date"><span class="d">7</span><span class="w">火</span></div><div class="day-main"><span class="day-time">お迎え 16:30 🚌</span></div><span class="chev">›</span></div>
+      <p class="muted">点線 = 先月と同じ内容の下書き(タップして変えられます)</p>
+      <div class="legend-sample"><div class="day-row applied"><div class="day-date"><span class="d">11</span><span class="w sat">土</span></div><div class="day-main"><span class="day-time">8:30 〜 16:00</span></div><span class="chev">›</span></div></div>
+      <p class="muted">緑の線 = 自分で入力・確定した日</p>
+      <div class="legend-sample"><div class="day-row sat"><div class="day-date"><span class="d">4</span><span class="w sat">土</span></div><div class="day-main"><span class="day-event">大掃除</span><span class="day-time"><span class="none">—</span></span></div><span class="chev">›</span></div></div>
+      <p class="muted">ピンクの線 = 土曜・行事のある日(行事名が表示されます)</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>変更・キャンセル</h2>
+    <ul>
+      <li><b>締切(前月5日)まで</b>: 自由に変更できます。</li>
+      <li><b>締切後〜利用前日の15時まで</b>: 同じ画面からそのまま変更・追加・キャンセルできます。</li>
+      <li><b>それ以降(前日15時〜当日)</b>: アプリでは受け付けず、キンダーハウス携帯(080-XXXX-XXXX ※実際の番号はおたよりに記載)へお電話またはSMSでご連絡ください。該当日には「電話で」と表示されます。</li>
+    </ul>
+    <div class="kbd-note">学園を欠席する場合は学童にもご連絡ください(さくら連絡網でクラスに連絡済みの場合は不要)。</div>
+    <ul>
+      <li>キャンセルは日をタップ →「この日の利用をキャンセルする」。</li>
+      <li>当日のキャンセルやルールにないキャンセルは、料金がかかる場合があります。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>料金のめやす</h2>
+    <div class="table-scroll">
+    <table class="grid">
+      <thead><tr><th>項目</th><th>料金</th></tr></thead>
+      <tbody>
+        <tr><td>レギュラー会員(月〜金)</td><td>13,000円/月(8・3月は15,000円)</td></tr>
+        <tr><td>準レギュラー会員(週3日)</td><td>10,000円/月(8・3月は12,000円)</td></tr>
+        <tr><td>スポット会員</td><td>300円/30分</td></tr>
+        <tr><td>延長保育(18:00〜19:00)</td><td>700円/回+おやつ代300円/回</td></tr>
+        <tr><td>早朝保育(土曜・休業日 7:00〜8:00)</td><td>700円/回</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="muted" style="margin-top:8px">利用料は翌月に口座引き落とし。明細はアプリで配布されます。会員区分の変更・退会は変更希望月のひと月前までにご連絡ください。</p>
+  </div>
+</div>
+
+<!-- ==================== 管理者向けマニュアル ==================== -->
+<div class="app wide manual hidden" id="manualAdmin">
+  <button class="manual-back" onclick="closeManual('admin')">‹ 管理画面にもどる</button>
+  <header class="app-head">
+    <div class="brand">
+      <div class="kicker">学童クラブ キンダーハウス</div>
+      <h1>管理マニュアル</h1>
+    </div>
+  </header>
+
+  <div class="card" style="max-width:680px">
+    <h2>画面構成</h2>
+    <div class="table-scroll">
+    <table class="grid">
+      <thead><tr><th>タブ</th><th>役割</th><th>使うタイミング</th></tr></thead>
+      <tbody>
+        <tr><td>日別利用者</td><td>その日の出席簿。入退室・バス・直前変更を一覧</td><td>毎日</td></tr>
+        <tr><td>月次集計</td><td>児童ごとの利用実績と請求額の自動集計</td><td>月末〜月初</td></tr>
+        <tr><td>利用明細</td><td>児童ごとの明細書のプレビューとPDF出力</td><td>請求前</td></tr>
+        <tr><td>お知らせ配信</td><td>全保護者への連絡(アプリ内+メール)</td><td>随時</td></tr>
+        <tr><td>学園カレンダー設定</td><td>翌月の休園日・行事・日区分の登録</td><td>毎月の受付開始前</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card" style="max-width:680px">
+    <h2>毎月のサイクル</h2>
+    <ol class="steps">
+      <li><b>受付開始前</b>:「学園カレンダー設定」で翌月の休園日・行事(始業日・入学式・土曜行事など)を登録します。ここで設定した内容がそのまま保護者の申込み画面になります(「◯日は土曜日です」のような設問の手作りは不要)。</li>
+      <li><b>受付中(〜前月5日)</b>: 申込みは自動で集まります。締切後も前日15時までの変更はアプリ経由で反映されます。</li>
+      <li><b>利用当日</b>:「日別利用者」で出席簿を確認。電話・SMSで受けた直前変更やキャンセルは、その児童の行を直接修正し、メモ欄に経緯(例: 電話連絡 8:40)を残します。</li>
+      <li><b>月末</b>:「月次集計」で内容を確認し「この月を締める」。以降その月の数字は固定されます。</li>
+      <li><b>請求</b>: 締めた集計から「CSV(銀行引落用)」を出力して引き落とし手続きへ。「利用明細」から全員分の明細PDFを一括出力して配布します。</li>
+    </ol>
+  </div>
+
+  <div class="card" style="max-width:680px">
+    <h2>日別利用者の見方</h2>
+    <ul>
+      <li><span class="badge green">確定</span> 申込みどおりの利用予定</li>
+      <li><span class="badge blue">昨日変更</span> 24時間以内に変更があった行(メモ欄に変更内容)</li>
+      <li><span class="badge red">当日キャンセル</span> 電話などで当日連絡があった行</li>
+    </ul>
+    <p class="muted" style="margin-top:6px">「出席簿を印刷」で紙の出席簿、「CSV」で表計算用データを出力できます。</p>
+  </div>
+
+  <div class="card" style="max-width:680px">
+    <h2>料金の計算ルール</h2>
+    <p>会員区分(レギュラー/準レギュラー/スポット)の基本料に、延長(700円+おやつ300円)・早朝(700円)・スポット利用(300円/30分)を自動加算します。8月・3月のレギュラー/準レギュラー増額も自動です。</p>
+    <p class="muted" style="margin-top:6px">※料金改定時は料金マスタの更新だけで全体に反映されます(実装時)。</p>
+  </div>
+
+  <div class="card" style="max-width:680px">
+    <h2>今後追加予定の機能</h2>
+    <ul>
+      <li>ログイン(保護者はメールのリンクから、パスワード不要の方式を予定)</li>
+      <li>ユーザー管理(家庭・児童の登録、会員区分の変更・入退会の処理)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="toast" id="toast">保存しました</div>
+
+<script>
+// ---------- サンプルデータ ----------
+// 2026年4月: 4/1(水)始まり。日曜=5,12,19,26 / 土曜=4,11,18,25 / 祝日=29
+const EVENTS = { 4:"大掃除", 6:"始業日", 8:"入学式", 25:"6年 3校合同オリンピック" };
+const CLOSED = new Set([5,12,19,26,29]);
+const SATS = new Set([4,11,18,25]);
+const WEEK = ["日","月","火","水","木","金","土"];
+// 前月(3月)のパターンから自動生成された下書き = src:"prev"
+let bookings = {
+  6:{out:"16:30",bus:true,src:"prev"}, 7:{out:"16:30",bus:true,src:"prev"}, 8:{out:"16:30",bus:true,src:"prev"},
+  9:{out:"16:30",bus:true,src:"prev"}, 10:{out:"16:30",bus:true,src:"prev"},
+  13:{out:"16:30",bus:true,src:"prev"}, 14:{out:"16:30",bus:true,src:"prev"}, 15:{out:"16:30",bus:true,src:"prev"},
+  16:{out:"16:30",bus:true,src:"prev"}, 17:{out:"16:30",bus:true,src:"prev"},
+  20:{out:"16:30",bus:true,src:"prev"}, 21:{out:"16:30",bus:true,src:"prev"}, 22:{out:"16:30",bus:true,src:"prev"},
+  23:{out:"16:30",bus:true,src:"prev"}, 24:{out:"16:30",bus:true,src:"prev"},
+  27:{out:"16:30",bus:true,src:"prev"}, 28:{out:"16:30",bus:true,src:"prev"}, 30:{out:"16:30",bus:true,src:"prev"},
+  11:{in:"8:30",out:"16:00",bus:false},  // 本人が追加した土曜(下書きではない)
+};
+const TODAY = -1; // デモ上は締切前(全日編集可)。当日運用の見た目を見るときは 8 に変える
+let editingDay = null;
+
+// 料金(公式サイト2026-07時点): レギュラー月額13,000 + 土曜スポット300円/30分 + 延長700+おやつ300 + 早朝700
+function estimate(){
+  let est = 13000, extDays = 0, satMin = 0, early = 0;
+  for (const [d,b] of Object.entries(bookings)) {
+    const toMin = t => { const [h,m]=t.split(":").map(Number); return h*60+m; };
+    if (b.out && toMin(b.out) > 18*60) extDays++;
+    if (SATS.has(+d) && b.in) {
+      satMin += toMin(b.out) - Math.max(toMin(b.in), 8*60);
+      if (toMin(b.in) < 8*60) early++;
+    }
+  }
+  return est + extDays*1000 + Math.ceil(satMin/30)*300 + early*700;
+}
+
+function dayRowHTML(d){
+  const dow = new Date(2026,3,d).getDay();
+  const isClosed = CLOSED.has(d);
+  const isSat = SATS.has(d);
+  const b = bookings[d];
+  const locked = d <= TODAY + 1;
+  const ev = EVENTS[d] ? `<span class="day-event">${EVENTS[d]}</span>` : "";
+  const dateCell = `<div class="day-date"><span class="d">${d}</span><span class="w ${dow===6?"sat":dow===0?"sun":""}">${WEEK[dow]}</span></div>`;
+  if (isClosed) {
+    return `<div class="day-row closed">${dateCell}
+      <div class="day-main">${ev}<span class="day-time"><span class="none">${d===29?"祝日休園":"休園日"}</span></span></div>
+    </div>`;
+  }
+  const time = b
+    ? `<span class="day-time">${b.in ? `${b.in} 〜 ${b.out}` : `お迎え ${b.out}`} ${b.bus?"🚌":""}</span>`
+    : `<span class="day-time"><span class="none">—</span></span>`;
+  const right = locked ? `<span class="locked-note">電話で</span>` : `<span class="chev">›</span>`;
+  const cls = ["day-row", isSat?"sat":"",
+    b ? (b.src==="prev" ? "draft" : "applied") : "",
+    locked?"locked":""].join(" ");
+  return `<div class="${cls}" ${locked?"":`onclick="openSheet(${d})"`}>
+    ${dateCell}
+    <div class="day-main">${ev}${time}</div>
+    ${right}
+  </div>`;
+}
+
+function renderDays(){
+  document.getElementById("dayList").innerHTML =
+    Array.from({length:30},(_,i)=>dayRowHTML(i+1)).join("");
+  const n = Object.keys(bookings).length;
+  document.getElementById("sumDays").textContent = n + "日";
+  document.getElementById("sumEst").textContent = "レギュラー会員・概算 ¥" + estimate().toLocaleString();
+  const drafts = Object.values(bookings).filter(b=>b.src==="prev").length;
+  document.getElementById("draftHint").style.display = drafts ? "flex" : "none";
+}
+
+function clearDrafts(){
+  for (const d of Object.keys(bookings)) if (bookings[d].src==="prev") delete bookings[d];
+  renderDays(); showToast("下書きをクリアしました");
+}
+
+// ---------- 入力シート ----------
+const OUT_TIMES = ["14:30","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00"];
+function openSheet(d){
+  editingDay = d;
+  const dow = WEEK[new Date(2026,3,d).getDay()];
+  document.getElementById("sheetTitle").textContent = `4月${d}日(${dow})`;
+  document.getElementById("sheetEvent").textContent = EVENTS[d] ? `行事: ${EVENTS[d]}` : (SATS.has(d) ? "土曜保育(スポット利用)" : "");
+  document.getElementById("fieldIn").style.display = SATS.has(d) ? "block" : "none";
+  const b = bookings[d] || {};
+  if (b.in) document.getElementById("selIn").value = b.in;
+  document.getElementById("chkBus").checked = !!b.bus;
+  const chips = document.getElementById("outChips");
+  chips.innerHTML = OUT_TIMES.map(t=>`<div class="chip ${b.out===t?"sel":""}" onclick="selChip(this)">${t}</div>`).join("");
+  document.getElementById("btnCancelDay").style.display = bookings[d] ? "block" : "none";
+  document.getElementById("sheetOverlay").classList.add("open");
+}
+function selChip(el){
+  document.querySelectorAll("#outChips .chip").forEach(c=>c.classList.remove("sel"));
+  el.classList.add("sel");
+}
+function closeSheet(){ document.getElementById("sheetOverlay").classList.remove("open"); }
+function saveDay(){
+  const out = document.querySelector("#outChips .chip.sel");
+  if (!out) { alert("お迎え時間を選んでください"); return; }
+  const b = { out: out.textContent, bus: document.getElementById("chkBus").checked };
+  if (SATS.has(editingDay)) b.in = document.getElementById("selIn").value;
+  bookings[editingDay] = b;  // src なし = 本人が確定した入力
+  closeSheet(); renderDays(); showToast("保存しました(送信で確定)");
+}
+function cancelDay(){
+  delete bookings[editingDay];
+  closeSheet(); renderDays(); showToast("キャンセルしました(送信で確定)");
+}
+function submitAll(){ showToast("申込みを送信しました(モック)"); }
+
+// ---------- 画面切替 ----------
+function switchRole(r){
+  document.getElementById("manualParent").classList.add("hidden");
+  document.getElementById("manualAdmin").classList.add("hidden");
+  document.getElementById("parentApp").classList.toggle("hidden", r!=="parent");
+  document.getElementById("submitBar").classList.toggle("hidden", r!=="parent");
+  document.getElementById("adminApp").classList.toggle("hidden", r!=="admin");
+  document.getElementById("roleParent").classList.toggle("active", r==="parent");
+  document.getElementById("roleAdmin").classList.toggle("active", r==="admin");
+  window.scrollTo(0,0);
+}
+function showManual(which){
+  document.getElementById("parentApp").classList.add("hidden");
+  document.getElementById("adminApp").classList.add("hidden");
+  document.getElementById("submitBar").classList.add("hidden");
+  document.getElementById("manualParent").classList.toggle("hidden", which!=="parent");
+  document.getElementById("manualAdmin").classList.toggle("hidden", which!=="admin");
+  window.scrollTo(0,0);
+}
+function closeManual(which){ switchRole(which); }
+function adminTab(t){
+  ["today","monthly","invoice","notice","calendar"].forEach(x=>{
+    document.getElementById("tab-"+x).classList.toggle("hidden", x!==t);
+  });
+  document.querySelectorAll(".admin-tabs button").forEach(b=>b.classList.toggle("active", b.dataset.tab===t));
+  if (document.getElementById("adminApp").classList.contains("hidden")) switchRole("admin");
+}
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+renderDays();
+</script>
+</body>
+</html>
