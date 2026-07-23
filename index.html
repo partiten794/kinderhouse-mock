@@ -348,9 +348,9 @@
     <h3 id="sheetTitle">4月6日(月)</h3>
     <div class="ev" id="sheetEvent"></div>
     <div class="field" id="fieldIn">
-      <label>入室時間(土曜・休業日のみ ※7時台は早朝保育 700円/回)</label>
+      <label>入室時間(土曜・休業日のみ)</label>
       <select class="time-sel" id="selIn">
-        <option>7:00</option><option>7:30</option><option>8:00</option><option>8:30</option><option>9:00</option><option>9:30</option><option>10:00</option>
+        <option>8:00</option><option>8:30</option><option>9:00</option><option>9:30</option><option>10:00</option>
       </select>
     </div>
     <div class="field">
@@ -462,17 +462,17 @@
       </div>
       <div class="table-scroll">
       <table class="grid">
-        <thead><tr><th>学年</th><th>名前</th><th>会員区分</th><th class="num">利用日数</th><th class="num">延長</th><th class="num">早朝</th><th class="num">スポット利用</th><th class="num">当月請求</th><th></th></tr></thead>
+        <thead><tr><th>学年</th><th>名前</th><th>会員区分</th><th class="num">利用日数</th><th class="num">延長</th><th class="num">スポット利用</th><th class="num">当月請求</th><th></th></tr></thead>
         <tbody>
-          <tr><td>1年</td><td>そうた</td><td>レギュラー</td><td class="num">18日</td><td class="num">2回</td><td class="num">0回</td><td class="num">—</td><td class="num">¥15,000</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
-          <tr><td>1年</td><td>はな</td><td>準レギュラー</td><td class="num">12日</td><td class="num">0回</td><td class="num">1回</td><td class="num">—</td><td class="num">¥10,700</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
-          <tr><td>3年</td><td>はると</td><td>レギュラー</td><td class="num">16日</td><td class="num">1回</td><td class="num">0回</td><td class="num">7.5h(土)</td><td class="num">¥18,500</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
-          <tr><td>4年</td><td>りく</td><td>スポット</td><td class="num">20日</td><td class="num">3回</td><td class="num">0回</td><td class="num">33.0h</td><td class="num">¥22,800</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
+          <tr><td>1年</td><td>そうた</td><td>レギュラー</td><td class="num">18日</td><td class="num">2回</td><td class="num">—</td><td class="num">¥15,000</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
+          <tr><td>1年</td><td>はな</td><td>準レギュラー</td><td class="num">12日</td><td class="num">0回</td><td class="num">—</td><td class="num">¥10,000</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
+          <tr><td>3年</td><td>はると</td><td>レギュラー</td><td class="num">16日</td><td class="num">1回</td><td class="num">7.5h(土)</td><td class="num">¥18,500</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
+          <tr><td>4年</td><td>りく</td><td>スポット</td><td class="num">20日</td><td class="num">3回</td><td class="num">33.0h</td><td class="num">¥22,800</td><td><button class="out-btn" onclick="adminTab('invoice')">明細</button></td></tr>
         </tbody>
-        <tfoot><tr style="font-weight:700"><td colspan="3">合計 (24名)</td><td class="num">312日</td><td class="num">18回</td><td class="num">6回</td><td class="num">96h</td><td class="num">¥298,400</td><td></td></tr></tfoot>
+        <tfoot><tr style="font-weight:700"><td colspan="3">合計 (24名)</td><td class="num">312日</td><td class="num">18回</td><td class="num">96h</td><td class="num">¥297,700</td><td></td></tr></tfoot>
       </table>
       </div>
-      <p class="muted" style="margin-top:10px">※料金は公式サイト掲載(2026-07時点)の料金表で計算: レギュラー13,000円/月(8・3月は15,000円)、準レギュラー10,000円/月、スポット300円/30分、延長700円/回+おやつ代300円、早朝700円/回。実装時は年度改定に備えて料金マスタ化。</p>
+      <p class="muted" style="margin-top:10px">※レギュラー/準レギュラーは定額(月〜金)。土曜利用はスポット(300円/30分)として加算。延長700円/回+おやつ代300円は課金運用を確認中(仮で計上)。実装時は年度改定に備えて料金マスタ化。</p>
     </div>
   </div>
 
@@ -633,8 +633,8 @@
         <tr><td>レギュラー会員(月〜金)</td><td>13,000円/月(8・3月は15,000円)</td></tr>
         <tr><td>準レギュラー会員(週3日)</td><td>10,000円/月(8・3月は12,000円)</td></tr>
         <tr><td>スポット会員</td><td>300円/30分</td></tr>
-        <tr><td>延長保育(18:00〜19:00)</td><td>700円/回+おやつ代300円/回</td></tr>
-        <tr><td>早朝保育(土曜・休業日 7:00〜8:00)</td><td>700円/回</td></tr>
+        <tr><td>土曜・休業日の利用</td><td>スポット扱い(300円/30分)</td></tr>
+        <tr><td>延長保育(18:00〜19:00)</td><td>700円/回+おやつ代300円/回 ※運用確認中</td></tr>
       </tbody>
     </table>
     </div>
@@ -694,7 +694,7 @@
 
   <div class="card" style="max-width:680px">
     <h2>料金の計算ルール</h2>
-    <p>会員区分(レギュラー/準レギュラー/スポット)の基本料に、延長(700円+おやつ300円)・早朝(700円)・スポット利用(300円/30分)を自動加算します。8月・3月のレギュラー/準レギュラー増額も自動です。</p>
+    <p>レギュラー/準レギュラーは定額(月〜金)、土曜・休業日の利用はスポット(300円/30分)として自動加算します。延長(700円+おやつ300円 ※運用確認中)も自動計算。8月・3月のレギュラー/準レギュラー増額も自動です。</p>
     <p class="muted" style="margin-top:6px">※料金改定時は料金マスタの更新だけで全体に反映されます(実装時)。</p>
   </div>
 
@@ -779,18 +779,21 @@ let bookings = {
 const TODAY = -1; // デモ上は締切前(全日編集可)。当日運用の見た目を見るときは 8 に変える
 let editingDay = null;
 
-// 料金(公式サイト2026-07時点): レギュラー月額13,000 + 土曜スポット300円/30分 + 延長700+おやつ300 + 早朝700
+// 料金(公式サイト+2026-07-23ヒアリング): レギュラー/準レギュラーは定額(月〜金)。
+// 土曜はスポット扱い(300円/30分)で加算。早朝保育は運用なし。
+// 延長(18時以降 700+おやつ300)は課金運用を要確認(仮で加算)
 function estimate(){
-  let est = 13000, extDays = 0, satMin = 0, early = 0;
+  const toM = t => { const [h,m]=t.split(":").map(Number); return h*60+m; };
+  let ext = 0, satMin = 0;
   for (const [d,b] of Object.entries(bookings)) {
-    const toMin = t => { const [h,m]=t.split(":").map(Number); return h*60+m; };
-    if (b.out && toMin(b.out) > 18*60) extDays++;
-    if (SATS.has(+d) && b.in) {
-      satMin += toMin(b.out) - Math.max(toMin(b.in), 8*60);
-      if (toMin(b.in) < 8*60) early++;
-    }
+    if (b.out && toM(b.out) > 18*60) ext++;
+    if (SATS.has(+d) && b.in) satMin += toM(b.out) - toM(b.in);
   }
-  return est + extDays*1000 + Math.ceil(satMin/30)*300 + early*700;
+  const parts = [];
+  if (satMin) parts.push(`土曜スポット${(Math.ceil(satMin/30)*300).toLocaleString()}`);
+  if (ext) parts.push(`延長${(ext*1000).toLocaleString()}`);
+  const extra = (satMin ? Math.ceil(satMin/30)*300 : 0) + ext*1000;
+  return { base: 13000, extra, parts };
 }
 
 function dayRowHTML(d){
@@ -825,7 +828,10 @@ function renderDays(){
     Array.from({length:30},(_,i)=>dayRowHTML(i+1)).join("");
   const n = Object.keys(bookings).length;
   document.getElementById("sumDays").textContent = n + "日";
-  document.getElementById("sumEst").textContent = "レギュラー会員・概算 ¥" + estimate().toLocaleString();
+  const e = estimate();
+  document.getElementById("sumEst").textContent = e.extra
+    ? `概算 ¥${(e.base+e.extra).toLocaleString()}(定額13,000+${e.parts.join("+")})`
+    : `レギュラー会員(定額)・概算 ¥${e.base.toLocaleString()}`;
   const drafts = Object.values(bookings).filter(b=>b.src==="prev").length;
   document.getElementById("draftHint").style.display = drafts ? "flex" : "none";
 }
