@@ -213,6 +213,18 @@
   .toolbar .spacer { flex: 1; }
   .toolbar .out-btn { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; color: var(--kh-deep); font-weight: 700; font-family: inherit; }
 
+  /* お迎え実績の転記 */
+  .step-btn {
+    width: 30px; height: 30px; border: 1px solid var(--line); background: #fff; border-radius: 8px;
+    cursor: pointer; color: var(--kh-deep); font-weight: 700; font-size: 13px; font-family: inherit;
+  }
+  .act-time { display: inline-block; min-width: 52px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .act-time.pending { color: #b9b9c6; font-weight: 400; }
+  .ontime-btn {
+    border: 1px solid var(--line); background: #fff; border-radius: 16px; padding: 5px 12px;
+    font-size: 12px; cursor: pointer; color: var(--kh-deep); font-weight: 700; font-family: inherit;
+  }
+
   /* 明細プレビュー */
   .invoice {
     background: #fff; border: 1px solid var(--line); border-radius: 4px;
@@ -383,6 +395,19 @@
           <tr><td>4年</td><td>りく</td><td>レギュラー</td><td>下校後</td><td>18:30</td><td>🚌</td><td><span class="badge green">確定</span></td><td>延長保育</td></tr>
         </tbody>
       </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>お迎え実績の転記</h2>
+      <p class="muted" style="margin-bottom:10px">お迎えノートの時間を入力すると、予定との差分と追加料金を自動計算します。初期値は予定時間なので、予定どおりなら1タップ、ズレていたら±5分で合わせるだけ。<br>※将来はバーコード等での入退室打刻に置き換える構想(それまではノート→ここへの転記で運用)</p>
+      <div class="table-scroll">
+      <table class="grid" id="actualTable"></table>
+      </div>
+      <div class="toolbar" style="margin-top:10px">
+        <button class="out-btn" onclick="allOnTime()">未入力を全員「予定どおり」で確定</button>
+        <span class="spacer"></span>
+        <span class="muted">※追加分の課金単位・丸め(切り上げ/切り下げ)はヒアリング中。仮: 30分単位切り上げ</span>
       </div>
     </div>
   </div>
@@ -600,6 +625,8 @@
       <li><span class="badge red">当日キャンセル</span> 電話などで当日連絡があった行</li>
     </ul>
     <p class="muted" style="margin-top:6px">「出席簿を印刷」で紙の出席簿、「CSV」で表計算用データを出力できます。</p>
+    <h3>お迎え実績の転記</h3>
+    <p>お迎えノートに記入された実際のお迎え時間は、同じ画面の「お迎え実績の転記」に入力します。初期値は予定時間なので、予定どおりなら「予定どおり」を1タップ、ズレていたら±5分ボタンで合わせるだけ。スポットの追加時間や延長保育の料金は自動で計算され、月次集計に反映されます(手計算・Excel転記は不要)。</p>
   </div>
 
   <div class="card" style="max-width:680px">
@@ -771,6 +798,61 @@ function cancelDay(){
 }
 function submitAll(){ showToast("申込みを送信しました(モック)"); }
 
+// ---------- お迎え実績の転記(管理側) ----------
+// actual=null は未入力。課金単位・丸めはヒアリング中(仮: 30分切り上げ)
+const ACTUALS = [
+  { name:"そうた", grade:"1年", member:"レギュラー", sched:"14:30", actual:"14:30" },
+  { name:"ゆずき", grade:"2年", member:"スポット",   sched:"16:30", actual:"17:00" },
+  { name:"はると", grade:"3年", member:"レギュラー", sched:"16:30", actual:null },
+  { name:"りく",   grade:"4年", member:"レギュラー", sched:"18:30", actual:null },
+];
+const toMin = t => { const [h,m]=t.split(":").map(Number); return h*60+m; };
+const toTime = m => `${Math.floor(m/60)}:${String(m%60).padStart(2,"0")}`;
+
+function actFee(r){
+  if (r.actual === null) return `<span class="muted">未入力</span>`;
+  const sm = toMin(r.sched), am = toMin(r.actual);
+  const msgs = [];
+  if (r.member === "スポット" && am > sm) {
+    const diff = am - sm;
+    msgs.push(`+${diff}分 ¥${(Math.ceil(diff/30)*300).toLocaleString()}`);
+  }
+  if (am > 18*60 && sm <= 18*60) msgs.push("延長保育 ¥1,000");
+  return msgs.length
+    ? `<span class="badge orange">${msgs.join(" / ")}</span>`
+    : `<span class="badge green">追加なし</span>`;
+}
+
+function renderActuals(){
+  const rows = ACTUALS.map((r,i)=>{
+    const t = r.actual ?? r.sched;
+    const cls = r.actual===null ? "act-time pending" : "act-time";
+    return `<tr>
+      <td>${r.grade}</td><td>${r.name}</td><td>${r.member}</td>
+      <td class="num">${r.sched}</td>
+      <td>
+        <button class="step-btn" onclick="bumpAct(${i},-5)">−</button>
+        <span class="${cls}">${t}</span>
+        <button class="step-btn" onclick="bumpAct(${i},5)">＋</button>
+        <button class="ontime-btn" onclick="onTime(${i})">予定どおり</button>
+      </td>
+      <td>${actFee(r)}</td>
+    </tr>`;
+  }).join("");
+  document.getElementById("actualTable").innerHTML =
+    `<thead><tr><th>学年</th><th>名前</th><th>会員区分</th><th class="num">予定</th><th>実際のお迎え(ノートから)</th><th>追加料金(自動)</th></tr></thead><tbody>${rows}</tbody>`;
+}
+function bumpAct(i,d){
+  const r = ACTUALS[i];
+  r.actual = toTime(toMin(r.actual ?? r.sched) + d);
+  renderActuals();
+}
+function onTime(i){ ACTUALS[i].actual = ACTUALS[i].sched; renderActuals(); }
+function allOnTime(){
+  ACTUALS.forEach(r=>{ if (r.actual===null) r.actual = r.sched; });
+  renderActuals(); showToast("未入力分を予定どおりで確定しました(モック)");
+}
+
 // ---------- 画面切替 ----------
 function switchRole(r){
   document.getElementById("manualParent").classList.add("hidden");
@@ -805,6 +887,7 @@ function showToast(msg){
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("show"), 2200);
 }
 renderDays();
+renderActuals();
 </script>
 </body>
 </html>
