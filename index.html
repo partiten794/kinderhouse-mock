@@ -345,6 +345,30 @@
   .now-member .big { font-size: 20px; font-weight: 700; color: var(--kh-deep); }
   .fee-note { font-size: 12.5px; color: var(--ink-soft); }
 
+  .time-input {
+    padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 16px;
+    font-family: inherit; color: var(--ink); font-variant-numeric: tabular-nums; min-width: 130px;
+  }
+  .quick-chips { margin-top: 8px; }
+  .quick-chips .chip { padding: 4px 10px; font-size: 12px; }
+  .sel-box { padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; font-family: inherit; }
+  .tbd { display: inline-block; font-size: 10.5px; padding: 0 6px; border-radius: 8px; background: var(--ember-soft); color: var(--ember); font-weight: 700; margin-left: 4px; vertical-align: 1px; }
+  table.grid.dense th, table.grid.dense td { padding: 5px 6px; font-size: 12px; }
+  table.grid tr.off td { color: var(--ink-soft); background: #fafaf7; }
+  table.grid tr.changed td { background: var(--ember-soft); }
+  .staff-chk { display: inline-flex; align-items: center; gap: 4px; margin: 0 12px 6px 0; font-size: 13px; }
+  #printArea { display: none; }
+  @media print {
+    body > *:not(#printArea) { display: none !important; }
+    #printArea { display: block !important; }
+    .print-page { page-break-after: always; font-size: 12px; color: #000; }
+    .print-page:last-child { page-break-after: auto; }
+    .print-page h1 { font-size: 16px; margin-bottom: 2px; }
+    .print-page .pmeta { font-size: 11px; margin-bottom: 8px; }
+    .print-page table { width: 100%; border-collapse: collapse; }
+    .print-page th, .print-page td { border: 1px solid #555; padding: 4px 6px; text-align: left; }
+  }
+
   .hidden { display: none !important; }
   .toast {
     position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
@@ -428,16 +452,17 @@
     <div class="ev" id="sheetEvent"></div>
     <div class="field" id="fieldIn">
       <label>入室時間(土曜・休業日のみ)</label>
-      <select class="time-sel" id="selIn">
-        <option>8:00</option><option>8:30</option><option>9:00</option><option>9:30</option><option>10:00</option>
-      </select>
+      <input type="time" class="time-input" id="selIn" min="08:00" max="18:00" value="08:30">
     </div>
     <div class="field">
+      <label>帰りのバス</label>
+      <select class="sel-box" id="selBus" onchange="onBusPick('parent')"></select>
+      <div class="muted" style="margin-top:4px">バスを選ぶと、お迎え(退室)時間はバスの発車時刻になります。<span class="tbd">時刻は仮</span></div>
+    </div>
+    <div class="field" id="parentOutField">
       <label>お迎え(退室)時間 ※18時以降は延長保育 700円/回+おやつ代300円</label>
-      <div class="chips" id="outChips"></div>
-    </div>
-    <div class="field">
-      <div class="toggle-row"><input type="checkbox" id="chkBus"><label for="chkBus" style="margin:0;font-size:14px;color:var(--ink)">帰りにバスを利用する</label></div>
+      <input type="time" class="time-input" id="outTime" min="12:00" max="19:00">
+      <div class="chips quick-chips" id="outChips"></div>
     </div>
     <div class="sheet-btns">
       <button class="btn ghost" onclick="closeSheet()">閉じる</button>
@@ -487,8 +512,9 @@
       <span class="big" id="curMemberName">レギュラー会員</span>
       <span class="fee-note" id="curMemberFee">月〜金・13,000円/月(8月・3月は15,000円)</span>
     </div>
-    <p class="muted" style="margin-top:6px">適用開始: 2024年4月 ・ 引落口座: 登録済み</p>
+    <p class="muted" style="margin-top:6px" id="curMemberMeta">適用開始: 2024年4月 ・ 引落口座: 登録済み</p>
     <div id="pendingReq"></div>
+    <p class="muted" style="margin-top:8px"><a href="#" onclick="toggleDemoSpot();return false;" id="demoSpotLink">(デモ)スポット会員の画面で見る</a></p>
   </div>
 
   <div class="card">
@@ -497,10 +523,21 @@
       <label>変更後の区分</label>
       <div class="chips" id="memberChips"></div>
     </div>
+    <div class="field hidden" id="fieldSemiFix">
+      <label>曜日の決め方(準レギュラー)</label>
+      <div class="chips" id="semiFixChips"></div>
+      <div class="muted" style="margin-top:4px" id="semiFixNote"></div>
+    </div>
     <div class="field hidden" id="fieldWeekdays">
-      <label>利用する曜日(準レギュラーは週3日まで)</label>
+      <label>利用する曜日(3日)</label>
       <div class="chips" id="weekdayChips"></div>
     </div>
+    <div class="field hidden" id="fieldPeriod">
+      <label>利用する期間</label>
+      <div class="chips" id="periodChips"></div>
+      <div class="muted" style="margin-top:4px">夏休みだけの変更は、お仕事の都合などでその期間だけ必要な方向けです。期間が終わるとスポット会員に戻ります。<span class="tbd">期間は仮</span></div>
+    </div>
+    <div class="kbd-note hidden" id="entryFeeNote"></div>
     <div class="field">
       <label>適用を開始したい月</label>
       <select class="time-sel" id="selStartMonth" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;">
@@ -508,10 +545,10 @@
       </select>
     </div>
     <div class="field">
-      <label>理由・ご相談(任意)</label>
+      <label id="reqReasonLabel">理由・ご相談(任意)</label>
       <textarea class="memo-box" id="reqReason" placeholder="例: 9月から習い事が始まるため、月・水・金のみの利用にしたいです"></textarea>
     </div>
-    <div class="kbd-note">変更は<b>希望月のひと月前まで</b>にご申請ください。キンダーハウスが内容を確認し、承認されるとこの画面と問い合わせでお知らせします。</div>
+    <div class="kbd-note">変更は<b>希望月の前月10日まで</b>にご申請ください(例: 10月からの変更は9月10日まで)。キンダーハウスが内容を確認し、承認されるとこの画面と問い合わせでお知らせします。</div>
     <div class="sheet-btns">
       <button class="btn primary" style="flex:1" onclick="submitMemberReq()">この内容で申請する</button>
     </div>
@@ -562,6 +599,7 @@
     <button data-tab="inquiry" onclick="adminTab('inquiry')">問い合わせ<span id="inqBadge" class="badge red" style="margin-left:5px">2</span></button>
     <button data-tab="master" onclick="adminTab('master')">利用者マスタ<span id="reqBadge" class="badge red" style="margin-left:5px">1</span></button>
     <button data-tab="calendar" onclick="adminTab('calendar')">学園カレンダー設定</button>
+    <button data-tab="report" onclick="adminTab('report')">市への報告</button>
   </div>
 
   <!-- 日別 -->
@@ -576,13 +614,31 @@
         <input type="date" value="2026-04-08">
         <span class="badge orange">入学式</span>
         <span class="spacer"></span>
-        <button class="out-btn">出席簿を印刷</button>
+        <button class="out-btn" onclick="printRoster()">出席簿を印刷</button>
         <button class="out-btn">CSV</button>
       </div>
+      <div class="toolbar" style="margin-top:-4px">
+        <span class="muted">印刷する場所:</span>
+        <span id="printRooms"></span>
+        <span class="tbd">場所ごとに中身を分けるかは要確認</span>
+      </div>
+      <div id="printStatus"></div>
       <p class="muted" style="margin-bottom:8px">電話・窓口で受けた当日の変更やキャンセルは、右端の「<b>修正</b>」から管理者が直接書き換えられます(申込みの締切後・前日15時以降でも可)。メモもそこで入力します。</p>
       <div class="table-scroll">
       <table class="grid" id="dayTable"></table>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>この日の開所と職員配置(市への報告に使います)</h2>
+      <div class="toolbar">
+        <label class="muted">開所</label><input type="time" class="time-input" id="dayOpen" value="13:30" onchange="renderDayOps()">
+        <label class="muted">閉所</label><input type="time" class="time-input" id="dayClose" value="19:00" onchange="renderDayOps()">
+        <span class="muted" id="dayOpenNote"></span>
+      </div>
+      <div style="margin:4px 0 6px" class="muted">この日に入った支援員(勤務した人にチェック)</div>
+      <div id="dayStaff"></div>
+      <div id="dayOpsSummary" style="margin-top:6px"></div>
     </div>
 
     <div class="card">
@@ -748,16 +804,64 @@
       <p class="muted" style="margin-bottom:10px">ここで設定した区分が保護者の申込み画面にそのまま反映されます(「◯日は土曜日です」のような毎月の設問手作りが不要になります)。学園の年間スケジュールに連動。</p>
       <div class="table-scroll">
       <table class="grid">
-        <thead><tr><th>日付</th><th>区分</th><th>行事名</th><th>保護者入力</th></tr></thead>
+        <thead><tr><th>日付</th><th>区分</th><th>行事名</th><th>保護者入力</th><th>市報告の日区分</th><th>開所予定</th></tr></thead>
         <tbody>
-          <tr><td>4/4(土)</td><td><span class="badge blue">土曜保育</span></td><td>大掃除</td><td>入室+退室</td></tr>
-          <tr><td>4/6(月)</td><td><span class="badge orange">短縮</span></td><td>始業日</td><td>退室のみ</td></tr>
-          <tr><td>4/8(水)</td><td><span class="badge orange">短縮</span></td><td>入学式</td><td>退室のみ</td></tr>
-          <tr><td>4/25(土)</td><td><span class="badge blue">土曜保育</span></td><td>6年 3校合同オリンピック</td><td>入室+退室</td></tr>
-          <tr><td>4/29(水)</td><td><span class="badge red">休園</span></td><td>昭和の日</td><td>—</td></tr>
+          <tr><td>4/1(水)〜4/3(金)</td><td><span class="badge blue">春休み</span></td><td>—</td><td>入室+退室</td><td>学校休業日</td><td>8:00〜19:00</td></tr>
+          <tr><td>4/4(土)</td><td><span class="badge blue">土曜保育</span></td><td>大掃除</td><td>入室+退室</td><td>学校休業日</td><td>8:00〜19:00</td></tr>
+          <tr><td>4/6(月)</td><td><span class="badge orange">短縮</span></td><td>始業日</td><td>退室のみ</td><td>平日</td><td>11:30〜19:00</td></tr>
+          <tr><td>4/8(水)</td><td><span class="badge orange">短縮</span></td><td>入学式</td><td>退室のみ</td><td>平日</td><td>13:30〜19:00</td></tr>
+          <tr><td>4/25(土)</td><td><span class="badge blue">土曜保育</span></td><td>6年 3校合同オリンピック</td><td>入室+退室</td><td>学校休業日</td><td>8:00〜19:00</td></tr>
+          <tr><td>4/29(水)</td><td><span class="badge red">休園</span></td><td>昭和の日</td><td>—</td><td>閉所</td><td>—</td></tr>
+          <tr class="off"><td>上記以外の平日</td><td>通常</td><td>—</td><td>退室のみ</td><td>平日</td><td>14:00〜19:00</td></tr>
         </tbody>
       </table>
       </div>
+      <p class="muted" style="margin-top:8px">「市報告の日区分」と「開所予定」は、相模原市への出席状況報告書(開所日数の判定: 平日3時間以上/学校休業日8時間以上)に使います。開所予定は日別利用者の画面でその日ごとに直せます。<span class="tbd">時刻は仮</span></p>
+    </div>
+  </div>
+
+  <!-- 市への報告 -->
+  <div id="tab-report" class="hidden">
+    <div class="card">
+      <div class="toolbar">
+        <select><option>2026年4月分</option><option>2026年3月分</option></select>
+        <span class="muted">相模原市 出席状況報告書(支援単位ごと)・<b>翌月10日まで</b>に提出</span>
+        <span class="spacer"></span>
+        <button class="out-btn" onclick="showToast('市の様式(Excel)に書き出しました(モック)')">市の様式(Excel)に書き出す</button>
+        <button class="out-btn">CSV</button>
+      </div>
+      <p class="muted">日々の申込み・お迎え実績・開所時間・職員配置から自動で集計します。報告のための手入力はありません。提出は市のLoGoフォームから(書き出したファイルを添付)。<span class="tbd">数字はモック用のサンプル</span></p>
+    </div>
+
+    <div class="mstr-grid">
+      <div class="card">
+        <h2>補助対象の児童数(1日現在)</h2>
+        <div class="table-scroll"><table class="grid dense" id="repGrade"></table></div>
+        <p class="muted" style="margin-top:6px">補助対象 = レギュラー・準レギュラー会員(スポット会員は含めない)<span class="tbd">要確認</span></p>
+      </div>
+      <div class="card">
+        <h2>児童の数(利用希望日数で換算)</h2>
+        <div class="table-scroll"><table class="grid dense" id="repWeekly"></table></div>
+        <p class="muted" style="margin-top:6px">準レギュラーは週3日、レギュラーは週5日として数えます。新規・退会は前月2日〜今月1日の入退会。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>日ごとの出席状況</h2>
+      <div class="table-scroll"><table class="grid dense" id="repDaily"></table></div>
+      <p class="muted" style="margin-top:6px">( )内は障害児の内数。開所日 ✓ = 平日3時間以上 / 学校休業日8時間以上開所した日。「合同」列は意味を確認中のため未出力。<span class="tbd">要確認</span></p>
+    </div>
+
+    <div class="card">
+      <h2>児童ごとの入室・退室(4/8)</h2>
+      <div class="table-scroll"><table class="grid dense" id="repInOut"></table></div>
+      <p class="muted" style="margin-top:6px">日別利用者の予定と、お迎え実績の転記から作ります。平日の入室は下校時刻を初期値にしています。</p>
+    </div>
+
+    <div class="card" style="max-width:680px">
+      <h2>職員と資格</h2>
+      <div class="table-scroll"><table class="grid" id="staffTable"></table></div>
+      <p class="muted" style="margin-top:6px">有資格者 = 放課後児童支援員の認定資格を持つ人として数えています。<span class="tbd">定義は要確認</span></p>
     </div>
   </div>
 </div>
@@ -771,12 +875,18 @@
       <label>この日の状態</label>
       <div class="chips" id="aeState"></div>
     </div>
-    <div class="field" id="aeOutField">
-      <label>お迎え(退室)時間 ※18時以降は延長保育</label>
-      <div class="chips" id="aeOut"></div>
+    <div class="field" id="aeInField">
+      <label>入室時間(平日は下校時刻が初期値)</label>
+      <input type="time" class="time-input" id="aeIn">
     </div>
     <div class="field" id="aeBusField">
-      <div class="toggle-row"><input type="checkbox" id="aeBus"><label for="aeBus" style="margin:0;font-size:14px;color:var(--ink)">帰りにバスを利用する</label></div>
+      <label>帰りのバス</label>
+      <select class="sel-box" id="aeBus" onchange="onBusPick('admin')"></select>
+    </div>
+    <div class="field" id="aeOutField">
+      <label>お迎え(退室)時間 ※18時以降は延長保育</label>
+      <input type="time" class="time-input" id="aeOutTime" min="12:00" max="19:00">
+      <div class="chips quick-chips" id="aeOut"></div>
     </div>
     <div class="field">
       <label>メモ(出席簿に表示。経緯や申し送りを書きます)</label>
@@ -811,9 +921,17 @@
     </div>
     <div class="field">
       <label>利用曜日(準レギュラー等)</label>
-      <input id="meDays" placeholder="例: 月・水・金"
+      <input id="meDays" placeholder="例: 月・水・金 / 曜日不定(週3日まで)"
         style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;">
     </div>
+    <div class="field">
+      <label>期間</label>
+      <select id="mePeriod" class="sel-box">
+        <option value="">この月から継続</option>
+        <option value="summer">夏休みの期間だけ(終わったらスポットに戻す)</option>
+      </select>
+    </div>
+    <div class="kbd-note hidden" id="meFeeNote"></div>
     <div class="field">
       <label>適用開始月</label>
       <select id="meStart" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;">
@@ -854,7 +972,8 @@
     <h2>毎月の申込みの流れ</h2>
     <ol class="steps">
       <li>画面を開くと、翌月のカレンダーに<b>先月と同じ利用パターンが下書き</b>として入っています(左端が藤色の点線の日)。</li>
-      <li>変えたい日を<b>タップ</b>して、お迎え時間を選びます。土曜日・学校休業日は入室時間も選びます。バス利用はスイッチでONに。</li>
+      <li>変えたい日を<b>タップ</b>して、お迎え時間を入れます。時間は<b>1分単位で自由に</b>入れられます(よく使う時間はボタンで1タップ)。土曜日・学校休業日は入室時間も入れます。</li>
+      <li>バスで帰る日は「<b>帰りのバス</b>」で<b>何時発のバスに乗せるか</b>を選びます。お迎え(退室)時間はバスの発車時刻になります。</li>
       <li>利用しない月や白紙から入れたいときは、リスト右上の「<b>クリア</b>」で下書きを消せます。</li>
       <li>最後に画面下の「<b>申込みを送信</b>」を押して完了。送信前の概算料金も下に表示されます。</li>
     </ol>
@@ -863,7 +982,7 @@
   <div class="card">
     <h2>カレンダーの見方</h2>
     <div class="legend-sample">
-      <div class="day-row draft"><div class="day-date"><span class="d">7</span><span class="w">火</span></div><div class="day-main"><span class="day-time">お迎え 16:30 🚌</span></div><span class="chev">›</span></div>
+      <div class="day-row draft"><div class="day-date"><span class="d">7</span><span class="w">火</span></div><div class="day-main"><span class="day-time">バス 16:50発 🚌</span></div><span class="chev">›</span></div>
       <p class="muted">点線 = 先月と同じ内容の下書き(タップして変えられます)</p>
       <div class="legend-sample"><div class="day-row applied"><div class="day-date"><span class="d">11</span><span class="w sat">土</span></div><div class="day-main"><span class="day-time">8:30 〜 16:00</span></div><span class="chev">›</span></div></div>
       <p class="muted">緑の線 = 自分で入力・確定した日</p>
@@ -895,12 +1014,16 @@
     <h2>会員区分の変更・退会</h2>
     <p>ホーム画面上部のメニュー「<b>会員区分の変更</b>」から、レギュラー・準レギュラー・スポットの変更と退会を申請できます。</p>
     <ol class="steps">
-      <li>変更後の区分を選びます(準レギュラーの場合は利用する曜日を3日選びます)。</li>
+      <li>変更後の区分を選びます。準レギュラーの場合は「<b>曜日を固定する</b>」(毎週同じ3日。曜日を選ぶ)か「<b>曜日を固定しない</b>」(毎月の申込みで週3日までの範囲で日を選ぶ)を選びます。</li>
       <li>適用を開始したい月と、理由・ご相談(任意)を入力します。</li>
       <li>「この内容で申請する」を押すと申請完了。画面上部に「<b>申請中</b>」と表示されます。</li>
       <li>キンダーハウスが承認すると表示が「<b>承認されました</b>」に変わり、その月から料金計算も自動で切り替わります。</li>
     </ol>
-    <div class="kbd-note">変更は<b>希望月のひと月前まで</b>にご申請ください。お電話で伝えていただいた場合はスタッフが代理で登録し、同じ画面に反映されます。</div>
+    <div class="kbd-note">変更は<b>希望月の前月10日まで</b>にご申請ください(例: 10月からの変更は9月10日まで)。お電話で伝えていただいた場合はスタッフが代理で登録し、同じ画面に反映されます。</div>
+    <h3>夏休みだけレギュラー・準レギュラーにする(スポット会員の方)</h3>
+    <p>お仕事の都合などで夏休みの間だけ毎日の利用が必要な場合は、区分を選んだあと「<b>夏休みの期間だけ</b>」を選び、<b>理由</b>を書いて申請します。夏休みが終わるとスポット会員に自動で戻ります。</p>
+    <h3>入会金の差額</h3>
+    <p>入会金はレギュラー・準レギュラーが12,000円、スポットが3,000円です。スポットからレギュラー・準レギュラーに変わる場合は、<b>差額の9,000円</b>を適用開始月の利用料と一緒に引き落とします。申請画面にも表示されます。</p>
     <p class="muted">同じ画面の下に、これまでの区分の履歴(いつからどの区分だったか)も表示されます。</p>
   </div>
 
@@ -919,12 +1042,13 @@
         <tr><td>レギュラー会員(月〜金)</td><td>13,000円/月(8・3月は15,000円)</td></tr>
         <tr><td>準レギュラー会員(週3日)</td><td>10,000円/月(8・3月は12,000円)</td></tr>
         <tr><td>スポット会員</td><td>300円/30分</td></tr>
+        <tr><td>入会金</td><td>12,000円(スポットは3,000円。スポットから変更するときは差額9,000円)</td></tr>
         <tr><td>土曜・休業日の利用</td><td>スポット扱い(300円/30分)</td></tr>
         <tr><td>延長保育(18:00〜19:00)</td><td>700円/回+おやつ代300円/回 ※運用確認中</td></tr>
       </tbody>
     </table>
     </div>
-    <p class="muted" style="margin-top:8px">利用料は翌月に口座引き落とし。明細はアプリで配布されます。会員区分の変更・退会は変更希望月のひと月前までにご連絡ください。</p>
+    <p class="muted" style="margin-top:8px">利用料は翌月に口座引き落とし。明細はアプリで配布されます。会員区分の変更・退会は変更希望月の前月10日までにご連絡ください。</p>
   </div>
 </div>
 
@@ -950,7 +1074,8 @@
         <tr><td>お知らせ配信</td><td>全保護者への連絡(アプリ内+メール)</td><td>随時</td></tr>
         <tr><td>問い合わせ</td><td>保護者からの個別相談への返信。未読件数がタブに表示</td><td>随時</td></tr>
         <tr><td>利用者マスタ</td><td>児童ごとの情報・備考・やり取り・利用履歴を1画面で。会員区分の変更申請の承認もここ</td><td>随時・入退会時</td></tr>
-        <tr><td>学園カレンダー設定</td><td>翌月の休園日・行事・日区分の登録</td><td>毎月の受付開始前</td></tr>
+        <tr><td>学園カレンダー設定</td><td>翌月の休園日・行事・日区分(市報告の平日/学校休業日・開所予定時刻を含む)の登録</td><td>毎月の受付開始前</td></tr>
+        <tr><td>市への報告</td><td>相模原市の出席状況報告書を自動集計して、市の様式に書き出す</td><td>毎月10日まで(前月分)</td></tr>
       </tbody>
     </table>
     </div>
@@ -964,6 +1089,7 @@
       <li><b>利用当日</b>:「日別利用者」で出席簿を確認。電話・SMSで受けた直前変更やキャンセルは、その児童の行を直接修正し、メモ欄に経緯(例: 電話連絡 8:40)を残します。</li>
       <li><b>月末</b>:「月次集計」で内容を確認し「この月を締める」。以降その月の数字は固定されます。</li>
       <li><b>請求</b>: 締めた集計から「CSV(銀行引落用)」を出力して引き落とし手続きへ。「利用明細」から全員分の明細PDFを一括出力して配布します。</li>
+      <li><b>翌月10日まで</b>:「市への報告」で前月分を確認し「市の様式(Excel)に書き出す」。書き出したファイルを市のLoGoフォームから提出します。</li>
     </ol>
   </div>
 
@@ -974,7 +1100,11 @@
       <li><span class="badge blue">昨日変更</span> 24時間以内に変更があった行(メモ欄に変更内容)</li>
       <li><span class="badge red">当日キャンセル</span> 電話などで当日連絡があった行</li>
     </ul>
-    <p class="muted" style="margin-top:6px">「出席簿を印刷」で紙の出席簿、「CSV」で表計算用データを出力できます。</p>
+    <h3>紙の出席簿</h3>
+    <p>「出席簿を印刷」で、チェックした場所(教員室・ログハウス・保育室)の分を1枚ずつ印刷します。紙には印刷した時刻が入ります。<b>印刷した後に変更があった行は画面で色が付き</b>、「刷り直すか書き込んでください」と表示されます。子どもの前でスマホを開けないときは、別室で最新の状態をここで確認してください。</p>
+    <p class="muted" style="margin-top:6px">「CSV」で表計算用データも出力できます。</p>
+    <h3>この日の開所と職員配置</h3>
+    <p>同じ画面の下で、その日の<b>開所・閉所の時刻</b>(学園カレンダーの予定が初期値)と、<b>入った支援員</b>にチェックを付けます。有資格者の数は職員の登録から自動で数えます。ここで入れた内容が市への報告にそのまま使われます。</p>
     <h3>お迎え実績の転記</h3>
     <p>お迎えノートに記入された実際のお迎え時間は、同じ画面の「お迎え実績の転記」に入力します。初期値は予定時間なので、予定どおりなら「予定どおり」を1タップ、ズレていたら±5分ボタンで合わせるだけ。スポットの追加時間や延長保育の料金は自動で計算され、月次集計に反映されます(手計算・Excel転記は不要)。</p>
   </div>
@@ -984,7 +1114,7 @@
     <p>「日別利用者」の各行の右端「<b>修正</b>」から、その日の予定を管理者が直接書き換えられます。<b>締切後でも前日15時を過ぎていても修正できます</b>(保護者が操作できない時間帯の電話連絡はここで受けます)。</p>
     <ol class="steps">
       <li><b>状態</b>を選びます —「利用する」か「欠席」。欠席を選ぶと退室時間・バスの欄は消えます。</li>
-      <li>利用する場合は<b>お迎え時間</b>を選び、必要ならバス利用を切り替えます。</li>
+      <li>利用する場合は<b>入室時間・お迎え時間</b>(1分単位で自由入力)と<b>帰りのバス</b>(何時発の便か)を入れます。バスを選ぶと退室時間は発車時刻になります。</li>
       <li><b>メモ</b>に経緯を書きます(例: 母より電話 8:40。祖母がお迎え)。ここに書いた内容が出席簿のメモ欄に出ます。</li>
       <li><b>受付経路</b>(電話/窓口/メール/スタッフ判断)と<b>対応スタッフ</b>を選んで「この内容で修正する」。</li>
     </ol>
@@ -999,8 +1129,8 @@
     <table class="grid">
       <thead><tr><th>ブロック</th><th>入っているもの</th></tr></thead>
       <tbody>
-        <tr><td>基本情報</td><td>家庭・保護者・電話(第2連絡先)・メール・地区・きょうだい・入会日・引落の登録状況</td></tr>
-        <tr><td>契約・利用条件</td><td>会員区分と料金・適用開始月・利用曜日・バス(降車場所)・お迎え可能な人・アレルギー・配慮事項</td></tr>
+        <tr><td>基本情報</td><td>家庭・保護者・電話(第2連絡先)・メール・地区・きょうだい・入会日・入会金の支払い状況・引落の登録状況</td></tr>
+        <tr><td>契約・利用条件</td><td>会員区分と料金・適用開始月・期間(夏休みのみ等)・利用曜日・バス(降車場所・ふだん乗る便)・お迎え可能な人・アレルギー・配慮事項・市報告の区分</td></tr>
         <tr><td>備考(スタッフ共有)</td><td>常時表示しておきたい申し送り。下に日付つきのメモを追記していけます</td></tr>
         <tr><td>やり取りの履歴</td><td>アプリの問い合わせの直近と、電話・口頭で受けた内容の記録</td></tr>
         <tr><td>利用履歴</td><td>月ごとの利用日数・合計時間・請求額</td></tr>
@@ -1017,9 +1147,25 @@
     <h3>会員区分の変更</h3>
     <ul>
       <li><b>保護者がアプリから申請した場合</b>: 利用者マスタの上部「会員区分の変更申請」に並びます。タブに未処理の件数バッジが出ます。内容を確認して「<b>承認</b>」を押すと、その月から区分と料金計算が切り替わり、保護者にも通知されます。相談が必要なら「保留」にして問い合わせでやり取りします。</li>
-      <li><b>電話で受けた場合</b>: 一覧から児童を開いて「<b>区分を変更</b>」。変更後の区分・利用曜日・適用開始月・受付経路と理由を入れて登録します(代理登録)。</li>
+      <li><b>電話で受けた場合</b>: 一覧から児童を開いて「<b>区分を変更</b>」。変更後の区分・利用曜日・適用開始月・期間・受付経路と理由を入れて登録します(代理登録)。準レギュラーで曜日が決まらない人は利用曜日に「曜日不定(週3日まで)」と入れます。</li>
+      <li><b>夏休みだけの変更</b>: スポット会員がお仕事の都合などで夏休みの間だけレギュラー・準レギュラーになる申請です。申請一覧に「夏休みのみ」と出て、理由が必ず入っています。承認すると期間の終わりにスポットへ自動で戻ります。</li>
+      <li><b>入会金の差額</b>: スポットからレギュラー・準レギュラーへの変更では、差額9,000円が自動で計算され、承認すると適用開始月の請求に加算されます。各児童の「入会金」欄で支払い状況(支払済・請求中)を確認できます。</li>
       <li>どちらの場合も変更の記録が残り、適用開始月より前の確定済みの請求には影響しません。</li>
     </ul>
+  </div>
+
+  <div class="card" style="max-width:680px">
+    <h2>市への報告(出席状況報告書)</h2>
+    <p>補助金を受けるために、毎月10日までに前月分の出席状況報告書を相模原市に出します。「市への報告」タブは、日々の申込み・お迎え実績・開所時間・職員配置から次の項目を自動で集計します。報告のための手入力はありません。</p>
+    <ul>
+      <li>補助対象の児童数(レギュラー・準レギュラー。学年別、障害児の内数つき)</li>
+      <li>児童の数(週あたりの利用日数 × 係数。端数切上げ)</li>
+      <li>日ごとの学年別利用人数・18時以降の利用人数・支援員の人数(うち有資格者)・開所〜閉所の時刻</li>
+      <li>児童ごとの入室・退室の時刻</li>
+      <li>開所日数(平日3時間以上 / 学校休業日8時間以上の日)</li>
+    </ul>
+    <p>確認したら「市の様式(Excel)に書き出す」で市のファイルを作り、LoGoフォームから提出します。</p>
+    <div class="kbd-note">障害児の内数に数える基準、「合同」欄の意味、有資格者の定義は学園と確認中です。</div>
   </div>
 
   <div class="card" style="max-width:680px">
@@ -1062,6 +1208,7 @@
 </footer>
 
 <div class="toast" id="toast">保存しました</div>
+<div id="printArea"></div>
 
 <script>
 // ---------- 合言葉ゲート ----------
@@ -1098,13 +1245,13 @@ const SATS = new Set([4,11,18,25]);
 const WEEK = ["日","月","火","水","木","金","土"];
 // 前月(3月)のパターンから自動生成された下書き = src:"prev"
 let bookings = {
-  6:{out:"16:30",bus:true,src:"prev"}, 7:{out:"16:30",bus:true,src:"prev"}, 8:{out:"16:30",bus:true,src:"prev"},
-  9:{out:"16:30",bus:true,src:"prev"}, 10:{out:"16:30",bus:true,src:"prev"},
-  13:{out:"16:30",bus:true,src:"prev"}, 14:{out:"16:30",bus:true,src:"prev"}, 15:{out:"16:30",bus:true,src:"prev"},
-  16:{out:"16:30",bus:true,src:"prev"}, 17:{out:"16:30",bus:true,src:"prev"},
-  20:{out:"16:30",bus:true,src:"prev"}, 21:{out:"16:30",bus:true,src:"prev"}, 22:{out:"16:30",bus:true,src:"prev"},
-  23:{out:"16:30",bus:true,src:"prev"}, 24:{out:"16:30",bus:true,src:"prev"},
-  27:{out:"16:30",bus:true,src:"prev"}, 28:{out:"16:30",bus:true,src:"prev"}, 30:{out:"16:30",bus:true,src:"prev"},
+  6:{out:"16:50",bus:"16:50",src:"prev"}, 7:{out:"16:50",bus:"16:50",src:"prev"}, 8:{out:"16:50",bus:"16:50",src:"prev"},
+  9:{out:"16:50",bus:"16:50",src:"prev"}, 10:{out:"16:50",bus:"16:50",src:"prev"},
+  13:{out:"16:50",bus:"16:50",src:"prev"}, 14:{out:"16:50",bus:"16:50",src:"prev"}, 15:{out:"16:50",bus:"16:50",src:"prev"},
+  16:{out:"16:50",bus:"16:50",src:"prev"}, 17:{out:"16:50",bus:"16:50",src:"prev"},
+  20:{out:"16:50",bus:"16:50",src:"prev"}, 21:{out:"16:50",bus:"16:50",src:"prev"}, 22:{out:"16:50",bus:"16:50",src:"prev"},
+  23:{out:"16:50",bus:"16:50",src:"prev"}, 24:{out:"16:50",bus:"16:50",src:"prev"},
+  27:{out:"16:50",bus:"16:50",src:"prev"}, 28:{out:"16:50",bus:"16:50",src:"prev"}, 30:{out:"16:50",bus:"16:50",src:"prev"},
   11:{in:"8:30",out:"16:00",bus:false},  // 本人が追加した土曜(下書きではない)
 };
 const TODAY = -1; // デモ上は締切前(全日編集可)。当日運用の見た目を見るときは 8 に変える
@@ -1141,7 +1288,7 @@ function dayRowHTML(d){
     </div>`;
   }
   const time = b
-    ? `<span class="day-time">${b.in ? `${b.in} 〜 ${b.out}` : `お迎え ${b.out}`} ${b.bus?"🚌":""}</span>`
+    ? `<span class="day-time">${b.in ? `${b.in} 〜 ${b.out}` : b.bus ? `バス ${b.bus}発` : `お迎え ${b.out}`} ${b.bus?"🚌":""}</span>`
     : `<span class="day-time"><span class="none">—</span></span>`;
   const right = locked ? `<span class="locked-note">電話で</span>` : `<span class="chev">›</span>`;
   const cls = ["day-row", isSat?"sat":"",
@@ -1173,7 +1320,26 @@ function clearDrafts(){
 }
 
 // ---------- 入力シート ----------
-const OUT_TIMES = ["14:30","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00"];
+// 時刻は1分単位で自由入力(2026-10 修正依頼)。チップはよく使う時刻の近道
+const OUT_TIMES = ["14:30","15:30","16:30","17:30","18:00","18:30"];
+// バスの発車時刻(仮。実際の便は要確認)。選ぶと退室時刻=発車時刻になる
+const BUS_TIMES = ["14:50","15:50","16:50"];
+const hhmm = t => t ? t.replace(/^0/,"") : t;          // "08:30" → "8:30"
+const pad = t => t && t.length === 4 ? "0"+t : t;        // "8:30" → "08:30"(input[type=time]用)
+function busOptions(sel){
+  return `<option value="">バスを利用しない</option>` +
+    BUS_TIMES.map(t=>`<option value="${t}" ${sel===t?"selected":""}>${t} 発のバスに乗る</option>`).join("");
+}
+function quickChips(elId, inputId, cur){
+  document.getElementById(elId).innerHTML = OUT_TIMES.map(t =>
+    `<div class="chip ${cur===t?"sel":""}" onclick="document.getElementById('${inputId}').value='${pad(t)}';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">${t}</div>`).join("");
+}
+function onBusPick(side){
+  const busEl = document.getElementById(side==="parent" ? "selBus" : "aeBus");
+  const outEl = document.getElementById(side==="parent" ? "outTime" : "aeOutTime");
+  if (busEl.value) outEl.value = pad(busEl.value);
+  outEl.disabled = !!busEl.value;
+}
 function openSheet(d){
   editingDay = d;
   const dow = WEEK[new Date(2026,3,d).getDay()];
@@ -1181,23 +1347,21 @@ function openSheet(d){
   document.getElementById("sheetEvent").textContent = EVENTS[d] ? `行事: ${EVENTS[d]}` : (SATS.has(d) ? "土曜保育(スポット利用)" : "");
   document.getElementById("fieldIn").style.display = SATS.has(d) ? "block" : "none";
   const b = bookings[d] || {};
-  if (b.in) document.getElementById("selIn").value = b.in;
-  document.getElementById("chkBus").checked = !!b.bus;
-  const chips = document.getElementById("outChips");
-  chips.innerHTML = OUT_TIMES.map(t=>`<div class="chip ${b.out===t?"sel":""}" onclick="selChip(this)">${t}</div>`).join("");
+  document.getElementById("selIn").value = pad(b.in || "8:30");
+  document.getElementById("selBus").innerHTML = busOptions(b.bus || "");
+  document.getElementById("outTime").value = pad(b.out || "");
+  quickChips("outChips", "outTime", b.out);
+  onBusPick("parent");
   document.getElementById("btnCancelDay").style.display = bookings[d] ? "block" : "none";
   document.getElementById("sheetOverlay").classList.add("open");
 }
-function selChip(el){
-  document.querySelectorAll("#outChips .chip").forEach(c=>c.classList.remove("sel"));
-  el.classList.add("sel");
-}
 function closeSheet(){ document.getElementById("sheetOverlay").classList.remove("open"); }
 function saveDay(){
-  const out = document.querySelector("#outChips .chip.sel");
-  if (!out) { alert("お迎え時間を選んでください"); return; }
-  const b = { out: out.textContent, bus: document.getElementById("chkBus").checked };
-  if (SATS.has(editingDay)) b.in = document.getElementById("selIn").value;
+  const out = hhmm(document.getElementById("outTime").value);
+  if (!out) { alert("お迎え時間を入れてください"); return; }
+  if (toMin(out) > 19*60) { alert("19:00より後は選べません"); return; }
+  const b = { out, bus: document.getElementById("selBus").value || false };
+  if (SATS.has(editingDay)) b.in = hhmm(document.getElementById("selIn").value);
   bookings[editingDay] = b;  // src なし = 本人が確定した入力
   closeSheet(); renderDays(); showToast("保存しました(送信で確定)");
 }
@@ -1406,6 +1570,7 @@ const MASTER = [
   { key:"haruto", name:"はると", grade:"3年", family:"山田家", member:"レギュラー", since:"2024年4月", days:"月〜金",
     bus:true, busStop:"日連入口", parent:"山田 花子(母)", tel:"090-XXXX-1234", tel2:"080-XXXX-5678(父・太郎)",
     mail:"yamada@example.com", area:"日連", siblings:"—", joined:"2024-04-01(38期)", billing:"口座登録済み(引落)",
+    entryFee:12000, entryPaid:"支払済(2024年4月)", sn:false, busTime:"16:50",
     allergy:"なし", care:"人混みが苦手。行事の日は疲れやすく、早めのお迎えが望ましい",
     pickup:"母・父・祖母(山田 春子)",
     memo:"バスは日連入口で降車。祖母のお迎えは事前連絡あり。",
@@ -1417,6 +1582,7 @@ const MASTER = [
   { key:"souta", name:"そうた", grade:"1年", family:"佐藤家", member:"レギュラー", since:"2026年4月", days:"月〜金",
     bus:false, busStop:"—", parent:"佐藤 美咲(母)", tel:"090-XXXX-2233", tel2:"—",
     mail:"sato@example.com", area:"名倉", siblings:"—", joined:"2026-04-01(40期)", billing:"口座登録済み(引落)",
+    entryFee:12000, entryPaid:"請求中(4月分の引落に加算)", sn:false, busTime:"",
     allergy:"乳製品(相談中)", care:"入学したばかり。お迎えは基本14:30",
     pickup:"母・父",
     memo:"おやつの乳製品対応を確認中(問い合わせスレッド参照)。",
@@ -1427,6 +1593,7 @@ const MASTER = [
   { key:"hana", name:"はな", grade:"1年", family:"田中家", member:"準レギュラー", since:"2026年4月", days:"月・水・金",
     bus:true, busStop:"牧野", parent:"田中 里美(母)", tel:"090-XXXX-3344", tel2:"—",
     mail:"tanaka@example.com", area:"牧野", siblings:"—", joined:"2026-04-01(40期)", billing:"口座登録済み(引落)",
+    entryFee:12000, entryPaid:"支払済(2026年4月)", sn:true, busTime:"15:50",
     allergy:"なし", care:"バス通学。乗り遅れが心配なので出発5分前に声かけ",
     pickup:"母・祖父(田中 誠)",
     memo:"入学式の翌日から利用開始。",
@@ -1437,6 +1604,7 @@ const MASTER = [
   { key:"yuzuki", name:"ゆずき", grade:"2年", family:"鈴木家", member:"スポット", since:"2025年4月", days:"不定期",
     bus:false, busStop:"—", parent:"鈴木 亮(父)", tel:"090-XXXX-4455", tel2:"080-XXXX-9900(母・恵)",
     mail:"suzuki@example.com", area:"吉野", siblings:"—", joined:"2025-04-01(39期)", billing:"口座登録済み(引落)",
+    entryFee:3000, entryPaid:"支払済(2025年4月・スポット)", sn:false, busTime:"",
     allergy:"そば", care:"—",
     pickup:"父・母",
     memo:"父の勤務シフト次第で前日変更が多い。電話連絡が中心。",
@@ -1447,6 +1615,7 @@ const MASTER = [
   { key:"koharu", name:"こはる", grade:"3年", family:"高橋家", member:"スポット", since:"2024年9月", days:"不定期",
     bus:false, busStop:"—", parent:"高橋 直子(母)", tel:"090-XXXX-5566", tel2:"—",
     mail:"takahashi@example.com", area:"日連", siblings:"—", joined:"2024-09-01(38期)", billing:"口座登録済み(引落)",
+    entryFee:3000, entryPaid:"支払済(2024年9月・スポット)", sn:false, busTime:"",
     allergy:"なし", care:"体調を崩しやすく、当日キャンセルが出やすい",
     pickup:"母",
     memo:"当日キャンセルは電話。母の職場からの連絡が多い。",
@@ -1457,6 +1626,7 @@ const MASTER = [
   { key:"riku", name:"りく", grade:"4年", family:"伊藤家", member:"レギュラー", since:"2023年4月", days:"月〜金",
     bus:true, busStop:"名倉入口", parent:"伊藤 健(父)", tel:"090-XXXX-6677", tel2:"080-XXXX-1122(母・彩)",
     mail:"ito@example.com", area:"名倉", siblings:"—", joined:"2023-04-01(37期)", billing:"口座登録済み(引落)",
+    entryFee:12000, entryPaid:"支払済(2023年4月)", sn:false, busTime:"16:50",
     allergy:"なし", care:"延長保育の利用が多い。18:30お迎えが基本",
     pickup:"父・母",
     memo:"共働きのため延長が常態。おやつ代の加算について説明済み。",
@@ -1468,7 +1638,14 @@ const MASTER = [
 const M = k => MASTER.find(m => m.key === k);
 
 // 会員区分の変更申請(保護者からの申請 / 管理者の代理登録)
+// period:"summer" = 夏休みの期間だけ(終わったらスポットに戻る)。reason 必須
+const SUMMER = "2026年7月21日〜8月31日";  // 仮。学園カレンダーの夏休みから取る
+const ENTRY_FEE = { "レギュラー":12000, "準レギュラー":12000, "スポット":3000 };
+// スポット→レギュラー/準レギュラーで入会金の差額が発生(12,000-3,000=9,000円)
+const entryDiff = (from, to) => (ENTRY_FEE[to]||0) - (ENTRY_FEE[from]||0) > 0 ? ENTRY_FEE[to]-ENTRY_FEE[from] : 0;
 let MEMBER_REQS = [
+  { key:"yuzuki", from:"スポット", to:"レギュラー", days:"月〜金", start:"2026年7月", period:"summer",
+    reason:"夏休み中は父の勤務が日勤のみになり、毎日の預け先が必要なため", at:"6/8 21:14(アプリ)", status:"申請中" },
   { key:"hana", from:"準レギュラー", to:"レギュラー", days:"月〜金", start:"2026年9月",
     reason:"母の勤務日数が増えるため", at:"7/18 9:30(電話・代理登録)", status:"承認済 7/18 スタッフA" },
 ];
@@ -1482,34 +1659,64 @@ let CHANGELOG = [
 // ---------- 会員区分の変更(保護者側) ----------
 const PLAN_KEYS = ["レギュラー","準レギュラー","スポット","退会"];
 const WEEKDAYS = ["月","火","水","木","金"];
-let reqPlan = null, reqDays = [];
-const ME = "haruto";  // デモ上のログインユーザー
+let reqPlan = null, reqDays = [], reqFixed = true, reqPeriod = "";
+let ME = "haruto";  // デモ上のログインユーザー
+// (デモ)スポット会員の画面で見る: 夏休みだけの変更・入会金差額の表示を確認するため
+function toggleDemoSpot(){
+  ME = ME === "haruto" ? "yuzuki" : "haruto";
+  reqPlan = null; reqDays = []; reqPeriod = "";
+  document.getElementById("demoSpotLink").textContent =
+    ME === "haruto" ? "(デモ)スポット会員の画面で見る" : "(デモ)レギュラー会員の画面にもどる";
+  renderMemberScreen();
+}
 
 function renderMemberScreen(){
   const m = M(ME);
-  document.getElementById("parentMemberLabel").textContent = m.member;
-  document.getElementById("curMemberName").textContent = m.member + "会員";
+  document.getElementById("parentMemberLabel").textContent = M("haruto").member;
+  document.getElementById("curMemberName").textContent = m.member + "会員" + (ME!=="haruto" ? `(デモ: ${m.name})` : "");
   document.getElementById("curMemberFee").textContent = PLANS[m.member].fee;
+  document.getElementById("curMemberMeta").textContent = `適用開始: ${m.since} ・ 引落口座: 登録済み ・ 入会金: ${m.entryFee.toLocaleString()}円 ${m.entryPaid}`;
+  // 準レギュラー: 曜日を固定する/しない
+  const semi = reqPlan === "準レギュラー";
+  document.getElementById("fieldSemiFix").classList.toggle("hidden", !semi);
+  document.getElementById("semiFixChips").innerHTML = [[true,"曜日を固定する"],[false,"曜日を固定しない"]].map(([v,l]) =>
+    `<div class="chip ${reqFixed===v?"sel":""}" onclick="reqFixed=${v};renderMemberScreen()">${l}</div>`).join("");
+  document.getElementById("semiFixNote").textContent = reqFixed
+    ? "毎週同じ3日を使う方。申込み画面にその曜日が下書きされます。"
+    : "勤務などで曜日が決まらない方。毎月の申込みで、週3日までの範囲で日を選びます。";
+  // 夏休みだけの変更(スポット会員がレギュラー/準レギュラーへ)
+  const canSummer = m.member === "スポット" && (reqPlan === "レギュラー" || semi);
+  document.getElementById("fieldPeriod").classList.toggle("hidden", !canSummer);
+  if (!canSummer) reqPeriod = "";
+  document.getElementById("periodChips").innerHTML = [["","この月からずっと"],["summer",`夏休みの期間だけ(${SUMMER})`]].map(([v,l]) =>
+    `<div class="chip ${reqPeriod===v?"sel":""}" onclick="reqPeriod='${v}';renderMemberScreen()">${l}</div>`).join("");
+  document.getElementById("reqReasonLabel").textContent = reqPeriod==="summer"
+    ? "理由(必須) — 夏休みだけ必要になったご事情をお書きください" : "理由・ご相談(任意)";
+  // 入会金の差額
+  const diff = reqPlan ? entryDiff(m.member, reqPlan) : 0;
+  const fn = document.getElementById("entryFeeNote");
+  fn.classList.toggle("hidden", !diff);
+  fn.innerHTML = diff ? `スポット会員から${reqPlan}会員への変更には、入会金の差額 <b>${diff.toLocaleString()}円</b>(${ENTRY_FEE[reqPlan].toLocaleString()}円−${ENTRY_FEE[m.member].toLocaleString()}円)がかかります。適用開始月の利用料と一緒に引き落とします。${reqPeriod==="summer"?'<span class="tbd">夏休みだけの場合の扱いは要確認</span>':""}` : "";
   // 申請中の表示
   const pend = MEMBER_REQS.filter(r => r.key === ME);
   document.getElementById("pendingReq").innerHTML = pend.length ? pend.map(r => {
     const done = r.status.startsWith("承認済");
     return `<div class="kbd-note" style="background:${done?"var(--green-soft)":"var(--kh-soft)"};color:${done?"var(--green)":"var(--kh-deep)"}">
-      ${done ? "承認されました" : "申請中"}: ${r.start}から <b>${r.to}</b>${r.days!=="—"?`(${r.days})`:""} ・ 申請 ${r.at}<br>
+      ${done ? "承認されました" : "申請中"}: ${r.period==="summer"?`夏休みの期間だけ(${SUMMER})`:r.start+"から"} <b>${r.to}</b>${r.days!=="—"?`(${r.days})`:""} ・ 申請 ${r.at}<br>
       <span style="font-weight:400">${done ? r.status : "キンダーハウスが確認しています。承認されるとお知らせします。"}</span>
     </div>`;
   }).join("") : "";
   // 区分チップ
   document.getElementById("memberChips").innerHTML = PLAN_KEYS.map(p =>
     `<div class="chip ${reqPlan===p?"sel":""}" onclick="pickPlan('${p}')">${p==="退会"?"退会する":p}</div>`).join("");
-  document.getElementById("fieldWeekdays").classList.toggle("hidden", reqPlan !== "準レギュラー");
+  document.getElementById("fieldWeekdays").classList.toggle("hidden", !(semi && reqFixed));
   document.getElementById("weekdayChips").innerHTML = WEEKDAYS.map(w =>
     `<div class="chip ${reqDays.includes(w)?"sel":""}" onclick="pickWeekday('${w}')">${w}</div>`).join("");
   // 履歴
   const rows = [
     ...MEMBER_REQS.filter(r=>r.key===ME).map(r =>
-      `<tr><td>${r.start}〜</td><td>${r.to}</td><td>${r.status.startsWith("承認済")?'<span class="badge green">承認済</span>':'<span class="badge blue">申請中</span>'}</td><td class="muted">${r.reason||"—"}</td></tr>`),
-    `<tr><td>2024年4月〜</td><td>レギュラー</td><td><span class="badge green">適用中</span></td><td class="muted">新規入会</td></tr>`,
+      `<tr><td>${r.period==="summer"?"夏休みのみ":r.start+"〜"}</td><td>${r.to}</td><td>${r.status.startsWith("承認済")?'<span class="badge green">承認済</span>':'<span class="badge blue">申請中</span>'}</td><td class="muted">${r.reason||"—"}</td></tr>`),
+    `<tr><td>${m.since}〜</td><td>${m.member}</td><td><span class="badge green">適用中</span></td><td class="muted">新規入会</td></tr>`,
   ].join("");
   document.getElementById("memberHistTable").innerHTML =
     `<thead><tr><th>適用</th><th>区分</th><th>状態</th><th>メモ</th></tr></thead><tbody>${rows}</tbody>`;
@@ -1523,16 +1730,18 @@ function pickWeekday(w){
 }
 function submitMemberReq(){
   if (!reqPlan) { alert("変更後の区分を選んでください"); return; }
-  if (reqPlan === "準レギュラー" && reqDays.length !== 3) { alert("利用する曜日を3日選んでください"); return; }
+  if (reqPlan === "準レギュラー" && reqFixed && reqDays.length !== 3) { alert("利用する曜日を3日選んでください"); return; }
+  const reason = document.getElementById("reqReason").value.trim();
+  if (reqPeriod === "summer" && !reason) { alert("夏休みだけの変更は、理由を書いてください"); return; }
   MEMBER_REQS.unshift({
     key: ME, from: M(ME).member, to: reqPlan,
-    days: reqPlan==="準レギュラー" ? WEEKDAYS.filter(w=>reqDays.includes(w)).join("・") : "—",
-    start: document.getElementById("selStartMonth").value,
-    reason: document.getElementById("reqReason").value.trim() || "—",
+    days: reqPlan==="準レギュラー" ? (reqFixed ? WEEKDAYS.filter(w=>reqDays.includes(w)).join("・") : "曜日不定(週3日まで)") : reqPlan==="レギュラー" ? "月〜金" : "—",
+    start: document.getElementById("selStartMonth").value, period: reqPeriod,
+    reason: reason || "—",
     at: "たった今", status: "申請中",
   });
   document.getElementById("reqReason").value = "";
-  reqPlan = null; reqDays = [];
+  reqPlan = null; reqDays = []; reqPeriod = ""; reqFixed = true;
   renderMemberScreen(); renderReqTable(); updateBadges();
   showToast("区分変更を申請しました(モック)");
 }
@@ -1547,23 +1756,35 @@ function closeMember(){ switchRole("parent"); }
 // ---------- 日別利用者(管理側・強制修正+メモ) ----------
 const STATES = ["確定","昨日変更","当日キャンセル","管理者修正","欠席"];
 const STATE_CLS = { "確定":"green", "昨日変更":"blue", "当日キャンセル":"red", "管理者修正":"orange", "欠席":"red" };
+// in = 入室時刻(平日は下校時刻が初期値。4/8 は入学式の短縮日で13:30)/ bus = 乗るバスの発車時刻
 let DAYROWS = [
-  { key:"souta",  state:"確定",         in:"下校後", out:"14:30", bus:false, memo:"" },
-  { key:"hana",   state:"確定",         in:"下校後", out:"15:30", bus:true,  memo:"入学式後より" },
-  { key:"yuzuki", state:"昨日変更",     in:"下校後", out:"16:30", bus:false, memo:"16:00→16:30(電話・父)" },
-  { key:"haruto", state:"確定",         in:"下校後", out:"16:30", bus:true,  memo:"" },
-  { key:"koharu", state:"当日キャンセル", in:"下校後", out:"—",    bus:false, memo:"電話連絡 8:40(発熱)" },
-  { key:"riku",   state:"確定",         in:"下校後", out:"18:30", bus:true,  memo:"延長保育" },
+  { key:"souta",  state:"確定",         in:"13:30", out:"14:30", bus:"",      memo:"" },
+  { key:"hana",   state:"確定",         in:"13:30", out:"15:50", bus:"15:50", memo:"入学式後より" },
+  { key:"yuzuki", state:"昨日変更",     in:"13:30", out:"16:30", bus:"",      memo:"16:00→16:30(電話・父)" },
+  { key:"haruto", state:"確定",         in:"13:30", out:"16:50", bus:"16:50", memo:"" },
+  { key:"koharu", state:"当日キャンセル", in:"—",    out:"—",    bus:"",      memo:"電話連絡 8:40(発熱)", dirty:true },
+  { key:"riku",   state:"確定",         in:"13:30", out:"18:30", bus:"",      memo:"延長保育" },
 ];
-let editingRow = null, aeState = null, aeOutSel = null, aeViaSel = null;
+let editingRow = null, aeState = null, aeViaSel = null;
 const VIA = ["電話","窓口","メール","スタッフ判断"];
+// 紙の出席簿(教員室・ログハウス・保育室の3枚)。印刷後に変わった行を画面で強調し、刷り直しを促す
+const ROOMS = ["教員室","ログハウス","保育室"];
+let roomSel = new Set(ROOMS), lastPrinted = "8:15";  // デモ: 朝 8:15 に印刷済み → 8:42 の欠席連絡が印刷後の変更
+const changedAfterPrint = r => !!(lastPrinted && r.dirty);  // dirty = 最後に印刷した後に変わった行
 
 function renderDayTable(){
+  document.getElementById("printRooms").innerHTML = ROOMS.map(x =>
+    `<label class="staff-chk"><input type="checkbox" ${roomSel.has(x)?"checked":""} onchange="this.checked?roomSel.add('${x}'):roomSel.delete('${x}')">${x}</label>`).join("");
+  const n = DAYROWS.filter(changedAfterPrint).length;
+  document.getElementById("printStatus").innerHTML = lastPrinted
+    ? (n ? `<div class="kbd-note" style="background:var(--ember-soft);color:var(--ember)">${lastPrinted} に印刷した後、<b>${n}件の変更</b>があります(色付きの行)。紙を刷り直すか、変更を書き込んでください。</div>`
+         : `<p class="muted" style="margin-bottom:8px">${lastPrinted} に印刷済み。印刷後の変更はありません。</p>`)
+    : "";
   const rows = DAYROWS.map((r,i)=>{
     const m = M(r.key);
-    return `<tr>
+    return `<tr class="${changedAfterPrint(r)?"changed":""}">
       <td>${m.grade}</td><td>${m.name}</td><td>${m.member}</td>
-      <td>${r.in}</td><td>${r.out}</td><td>${r.bus?"🚌":"—"}</td>
+      <td>${r.in}</td><td>${r.out}</td><td>${r.bus?"🚌 "+r.bus+"発":"—"}</td>
       <td><span class="badge ${STATE_CLS[r.state]}">${r.state}</span></td>
       <td>${r.memo || '<span class="muted">—</span>'}</td>
       <td><button class="out-btn" onclick="openAdminEdit(${i})">修正</button></td>
@@ -1582,9 +1803,12 @@ function openAdminEdit(i){
   const r = DAYROWS[i], m = M(r.key);
   document.getElementById("aeTitle").textContent = `4月8日(水) ${m.name}(${m.grade})`;
   aeState = (r.state === "当日キャンセル" || r.state === "欠席") ? "欠席" : "利用する";
-  aeOutSel = r.out === "—" ? null : r.out;
   aeViaSel = "電話";
-  document.getElementById("aeBus").checked = r.bus;
+  document.getElementById("aeIn").value = pad(r.in === "—" ? "13:30" : r.in);
+  document.getElementById("aeBus").innerHTML = busOptions(r.bus);
+  document.getElementById("aeOutTime").value = pad(r.out === "—" ? "" : r.out);
+  quickChips("aeOut", "aeOutTime", r.out);
+  onBusPick("admin");
   document.getElementById("aeMemo").value = r.memo;
   renderAeChips();
   document.getElementById("adminEditOverlay").classList.add("open");
@@ -1592,26 +1816,25 @@ function openAdminEdit(i){
 function renderAeChips(){
   document.getElementById("aeState").innerHTML = ["利用する","欠席"].map(s =>
     `<div class="chip ${aeState===s?"sel":""}" onclick="pickAeState('${s}')">${s}</div>`).join("");
-  document.getElementById("aeOut").innerHTML = OUT_TIMES.map(t =>
-    `<div class="chip ${aeOutSel===t?"sel":""}" onclick="pickAeOut('${t}')">${t}</div>`).join("");
   document.getElementById("aeVia").innerHTML = VIA.map(v =>
     `<div class="chip ${aeViaSel===v?"sel":""}" onclick="pickAeVia('${v}')">${v}</div>`).join("");
   const off = aeState === "欠席";
-  document.getElementById("aeOutField").classList.toggle("hidden", off);
-  document.getElementById("aeBusField").classList.toggle("hidden", off);
+  ["aeInField","aeOutField","aeBusField"].forEach(id => document.getElementById(id).classList.toggle("hidden", off));
 }
 function pickAeState(s){ aeState = s; renderAeChips(); }
-function pickAeOut(t){ aeOutSel = t; renderAeChips(); }
 function pickAeVia(v){ aeViaSel = v; renderAeChips(); }
 function closeAdminEdit(){ document.getElementById("adminEditOverlay").classList.remove("open"); }
 function saveAdminEdit(){
   const r = DAYROWS[editingRow], m = M(r.key);
   const before = r.state === "当日キャンセル" ? "欠席" : r.out;
-  if (aeState === "欠席") { r.state = "当日キャンセル"; r.out = "—"; r.bus = false; }
+  if (aeState === "欠席") { r.state = "当日キャンセル"; r.in = "—"; r.out = "—"; r.bus = ""; }
   else {
-    if (!aeOutSel) { alert("お迎え時間を選んでください"); return; }
-    r.out = aeOutSel; r.bus = document.getElementById("aeBus").checked; r.state = "管理者修正";
+    const out = hhmm(document.getElementById("aeOutTime").value);
+    if (!out) { alert("お迎え時間を入れてください"); return; }
+    r.in = hhmm(document.getElementById("aeIn").value) || r.in;
+    r.out = out; r.bus = document.getElementById("aeBus").value; r.state = "管理者修正";
   }
+  r.dirty = true;
   r.memo = document.getElementById("aeMemo").value.trim();
   const staff = document.getElementById("aeStaff").value;
   const after = aeState === "欠席" ? "欠席" : r.out;
@@ -1622,6 +1845,115 @@ function saveAdminEdit(){
   showToast("修正しました(記録に残ります)");
 }
 
+function printRoster(){
+  if (!roomSel.size) { alert("印刷する場所を選んでください"); return; }
+  const now = new Date().toTimeString().slice(0,5).replace(/^0/,"");
+  const body = DAYROWS.map(r => {
+    const m = M(r.key);
+    const care = [m.allergy!=="なし"?"アレルギー: "+m.allergy:"", m.care!=="—"?m.care:""].filter(Boolean).join(" / ");
+    return `<tr><td>${m.grade}</td><td>${m.name}</td><td>${r.state==="当日キャンセル"?"欠席":r.in}</td><td>${r.out}</td><td>${r.bus?r.bus+"発":""}</td><td>${r.memo}</td><td>${care}</td><td style="width:60px"></td></tr>`;
+  }).join("");
+  document.getElementById("printArea").innerHTML = [...roomSel].map(room => `
+    <div class="print-page">
+      <h1>出席簿 4月8日(水) — ${room}</h1>
+      <div class="pmeta">印刷 ${now} 時点。これ以降の変更はアプリの「日別利用者」で確認してください。 利用 ${DAYROWS.filter(r=>r.out!=="—").length}名</div>
+      <table><thead><tr><th>学年</th><th>名前</th><th>入室</th><th>退室</th><th>バス</th><th>メモ</th><th>注意</th><th>実際のお迎え</th></tr></thead><tbody>${body}</tbody></table>
+    </div>`).join("");
+  window.print();
+  lastPrinted = now;
+  DAYROWS.forEach(r => r.dirty = false);
+  renderDayTable();
+}
+
+// ---------- 開所と職員配置 / 市への報告 ----------
+// qual = 放課後児童支援員の認定資格(有資格者の定義は要確認)
+const STAFF = [
+  { name:"スタッフA", qual:true,  role:"施設長" },
+  { name:"スタッフB", qual:true,  role:"支援員" },
+  { name:"スタッフC", qual:false, role:"補助員" },
+  { name:"スタッフD", qual:false, role:"補助員(週2)" },
+];
+let dayStaff = new Set(["スタッフA","スタッフB","スタッフC"]);
+function renderDayOps(){
+  document.getElementById("dayStaff").innerHTML = STAFF.map(s =>
+    `<label class="staff-chk"><input type="checkbox" ${dayStaff.has(s.name)?"checked":""} onchange="this.checked?dayStaff.add('${s.name}'):dayStaff.delete('${s.name}');renderDayOps()">${s.name}${s.qual?' <span class="badge green">有資格</span>':""}</label>`).join("");
+  const on = STAFF.filter(s => dayStaff.has(s.name));
+  const o = hhmm(document.getElementById("dayOpen").value), c = hhmm(document.getElementById("dayClose").value);
+  const hours = (toMin(c) - toMin(o)) / 60;
+  document.getElementById("dayOpenNote").textContent = `学園カレンダーの予定(平日・短縮)から。${hours}時間開所`;
+  document.getElementById("dayOpsSummary").innerHTML =
+    `<span class="badge blue">支援員 ${on.length}人(うち有資格 ${on.filter(s=>s.qual).length}人)</span> `
+    + (hours >= 3 ? `<span class="badge green">開所日に数える(平日3時間以上)</span>` : `<span class="badge red">平日3時間未満 — 開所日に数えない</span>`);
+}
+
+// 4月の日ごとの数字はモック用のサンプル(実装では申込み・実績・配置から集計)
+function repDays(){
+  const out = [];
+  for (let d = 1; d <= 30; d++) {
+    const dow = new Date(2026,3,d).getDay();
+    const closed = CLOSED.has(d);
+    const holiday = SATS.has(d) || d <= 3;              // 土曜・春休み = 学校休業日
+    const seed = (d * 7 + 3) % 5;
+    const g = closed ? [0,0,0,0,0,0] : holiday
+      ? [2+seed%2, 2, 1+seed%2, 1, 0, 0]
+      : [5+seed%2, 4, 3+(seed>2?1:0), 2, 1, 0];
+    const sn = closed ? 0 : 1;                          // 障害の内数(はな・1年)
+    const open = closed ? null : holiday ? "8:00" : d===6 ? "11:30" : d===8 ? "13:30" : "14:00";
+    out.push({ d, dow, closed, holiday, g, sn, after18: closed ? 0 : holiday ? 0 : 1 + seed%2,
+      staff: closed ? 0 : holiday ? 2 : 3, qual: closed ? 0 : 2, open, close: closed ? null : "19:00" });
+  }
+  return out;
+}
+function renderReport(){
+  // 1日現在・補助対象(レギュラー/準レギュラー)を学年別に。障害の内数は ( )
+  const subj = MASTER.filter(m => m.member === "レギュラー" || m.member === "準レギュラー");
+  const grades = [1,2,3,4,5,6];
+  const cnt = (list, g) => list.filter(m => m.grade === g+"年").length;
+  document.getElementById("repGrade").innerHTML =
+    `<thead><tr><th></th>${grades.map(g=>`<th class="num">${g}年</th>`).join("")}<th class="num">合計</th></tr></thead><tbody>
+     <tr><td>人数</td>${grades.map(g=>`<td class="num">${cnt(subj,g)}</td>`).join("")}<td class="num"><b>${subj.length}</b></td></tr>
+     <tr><td>障害(内数)</td>${grades.map(g=>`<td class="num">${cnt(subj.filter(m=>m.sn),g)}</td>`).join("")}<td class="num">${subj.filter(m=>m.sn).length}</td></tr>
+     <tr class="off"><td>参考: スポット</td>${grades.map(g=>`<td class="num">${cnt(MASTER.filter(m=>m.member==="スポット"),g)}</td>`).join("")}<td class="num">${MASTER.filter(m=>m.member==="スポット").length}</td></tr></tbody>`;
+  // 児童の数: 週あたり利用日数 × 係数(端数切上げ)。新規 = 前月2日〜今月1日の入会
+  const W = [[2,0.4],[3,0.6],[4,0.8],[5,1]].map(([w,k]) => {
+    const list = subj.filter(m => (m.member==="レギュラー"?5:3) === w);
+    const isNew = m => m.joined.startsWith("2026-04-01");
+    const nw = list.filter(isNew).length, prev = list.length - nw, quit = 0;
+    const net = prev + nw - quit;
+    return { w, k, prev, nw, quit, net, num: Math.ceil(net * k) };
+  });
+  document.getElementById("repWeekly").innerHTML =
+    `<thead><tr><th>利用希望</th><th class="num">前月1日</th><th class="num">新規</th><th class="num">退会</th><th class="num">差引</th><th class="num">児童の数</th></tr></thead><tbody>
+     ${W.map(r=>`<tr><td>週${r.w}日${r.w===5?"以上":""}(×${r.k})</td><td class="num">${r.prev}</td><td class="num">${r.nw}</td><td class="num">${r.quit}</td><td class="num">${r.net}</td><td class="num">${r.num}</td></tr>`).join("")}
+     <tr style="font-weight:700"><td>合計</td><td class="num">${W.reduce((s,r)=>s+r.prev,0)}</td><td class="num">${W.reduce((s,r)=>s+r.nw,0)}</td><td class="num">0</td><td class="num">${W.reduce((s,r)=>s+r.net,0)}</td><td class="num">${W.reduce((s,r)=>s+r.num,0)}</td></tr></tbody>`;
+  // 日ごと
+  const days = repDays();
+  let openDays = 0;
+  const rows = days.map(x => {
+    const tot = x.g.reduce((a,b)=>a+b,0);
+    const hrs = x.open ? (toMin(x.close) - toMin(x.open)) / 60 : 0;
+    const ok = x.open && (x.holiday ? hrs >= 8 : hrs >= 3);
+    if (ok) openDays++;
+    const kind = x.closed ? "閉所" : x.holiday ? "休業日" : "平日";
+    return `<tr class="${x.closed?"off":""}"><td>${x.d}(${WEEK[x.dow]})</td><td>${kind}</td>
+      ${x.g.map((n,i)=>`<td class="num">${x.closed?"":n}${!x.closed&&i===0&&x.sn?`<span class="muted">(${x.sn})</span>`:""}</td>`).join("")}
+      <td class="num"><b>${x.closed?"":tot}</b></td><td class="num">${x.closed?"":x.after18}</td>
+      <td class="num">${x.closed?"":`${x.staff}(${x.qual})`}</td>
+      <td>${x.open?`${x.open}〜${x.close}`:"—"}</td><td>${ok?"✓":""}</td></tr>`;
+  }).join("");
+  document.getElementById("repDaily").innerHTML =
+    `<thead><tr><th>日</th><th>区分</th><th class="num">1年</th><th class="num">2年</th><th class="num">3年</th><th class="num">4年</th><th class="num">5年</th><th class="num">6年</th><th class="num">合計</th><th class="num">18時以降</th><th class="num">支援員(有資格)</th><th>開所〜閉所</th><th>開所日</th></tr></thead>
+     <tbody>${rows}</tbody><tfoot><tr style="font-weight:700"><td colspan="12">開所日数</td><td>${openDays}日</td></tr></tfoot>`;
+  // 児童ごとの入退室(4/8)
+  document.getElementById("repInOut").innerHTML =
+    `<thead><tr><th>学年</th><th>名前</th><th>会員区分</th><th>入室</th><th>退室</th><th>補助対象</th></tr></thead><tbody>
+     ${DAYROWS.map(r => { const m = M(r.key); return `<tr class="${r.out==="—"?"off":""}"><td>${m.grade}</td><td>${m.name}${m.sn?' <span class="badge orange">障害(内数)</span>':""}</td><td>${m.member}</td><td>${r.in}</td><td>${r.out}</td><td>${m.member==="スポット"?"—":"○"}</td></tr>`; }).join("")}</tbody>`;
+  // 職員
+  document.getElementById("staffTable").innerHTML =
+    `<thead><tr><th>名前</th><th>役割</th><th>放課後児童支援員の資格</th></tr></thead><tbody>
+     ${STAFF.map(s=>`<tr><td>${s.name}</td><td>${s.role}</td><td>${s.qual?'<span class="badge green">あり</span>':'<span class="muted">なし</span>'}</td></tr>`).join("")}</tbody>`;
+}
+
 // ---------- 利用者マスタ(管理側) ----------
 let masterSel = null;
 function renderReqTable(){
@@ -1630,8 +1962,8 @@ function renderReqTable(){
     const pending = r.status === "申請中";
     return `<tr>
       <td>${m.grade}</td><td>${m.name}</td><td>${m.family}</td>
-      <td>${r.from} → <b>${r.to}</b>${r.days!=="—"?`<div class="muted">${r.days}</div>`:""}</td>
-      <td>${r.start}から</td>
+      <td>${r.from} → <b>${r.to}</b>${r.days!=="—"?`<div class="muted">${r.days}</div>`:""}${entryDiff(r.from,r.to)?`<div><span class="badge orange">入会金差額 ¥${entryDiff(r.from,r.to).toLocaleString()}</span></div>`:""}</td>
+      <td>${r.period==="summer"?`<span class="badge blue">夏休みのみ</span><div class="muted">${SUMMER}<br>終了後スポットへ</div>`:r.start+"から"}</td>
       <td style="max-width:220px;white-space:normal">${r.reason}</td>
       <td>${pending?'<span class="badge red">申請中</span>':'<span class="badge green">'+r.status+'</span>'}<div class="muted">${r.at}</div></td>
       <td>${pending?`<button class="out-btn" onclick="approveReq(${i})">承認</button> <button class="out-btn" onclick="rejectReq(${i})">保留</button>`:""}</td>
@@ -1643,10 +1975,13 @@ function renderReqTable(){
 }
 function approveReq(i){
   const r = MEMBER_REQS[i], m = M(r.key);
+  const diff = entryDiff(r.from, r.to);
   m.member = r.to; m.since = r.start; if (r.days !== "—") m.days = r.days;
+  if (r.period === "summer") m.summerOnly = `夏休みの期間だけ(${SUMMER})。終了後はスポットに自動で戻る`;
+  if (diff) { m.entryFee += diff; m.entryPaid = `差額 ${diff.toLocaleString()}円を請求中(${r.start}分の引落に加算)`; }
   r.status = "承認済 スタッフA";
   CHANGELOG.unshift({ when:"たった今", who:"スタッフA", target:`${m.name}(${m.grade})`,
-    text:`会員区分 ${r.from}→${r.to}(${r.start}から・申請を承認)` });
+    text:`会員区分 ${r.from}→${r.to}(${r.period==="summer"?"夏休みのみ":r.start+"から"}・申請を承認)${diff?` / 入会金差額 ${diff.toLocaleString()}円を請求`:""}` });
   m.notes.unshift({ d:"たった今", by:"スタッフA", t:`区分変更を承認: ${r.from}→${r.to}(${r.start}から)` });
   renderReqTable(); renderMasterList(); renderDayTable(); renderChangeLog(); updateBadges();
   if (masterSel) renderMasterDetail();
@@ -1667,7 +2002,7 @@ function renderMasterList(){
     return `<tr onclick="openMaster('${m.key}')">
       <td>${m.grade}</td><td><b>${m.name}</b></td><td>${m.family}</td>
       <td>${m.member}<div class="muted">${m.days}</div></td>
-      <td>${m.bus?"🚌 "+m.busStop:"—"}</td>
+      <td>${m.bus?"🚌 "+m.busStop+(m.busTime?`<div class="muted">${m.busTime}発</div>`:""):"—"}</td>
       <td>${m.tel}</td>
       <td>${care}${unread?`<span class="badge red">未読 ${unread}</span>`:""}</td>
       <td class="muted">${m.since}〜</td>
@@ -1733,6 +2068,7 @@ function renderMasterDetail(){
           ${kv("地区", m.area)}
           ${kv("きょうだい", m.siblings)}
           ${kv("入会", m.joined)}
+          ${kv("入会金", `${m.entryFee.toLocaleString()}円 ${m.entryPaid.startsWith("支払済")?`<span class="badge green">${m.entryPaid}</span>`:`<span class="badge orange">${m.entryPaid}</span>`}`)}
           ${kv("引落", m.billing)}
         </table>
       </div>
@@ -1742,8 +2078,10 @@ function renderMasterDetail(){
         <table class="kv">
           ${kv("会員区分", `<b>${m.member}</b> <span class="muted">${PLANS[m.member].fee}</span>`)}
           ${kv("適用開始", m.since)}
+          ${m.summerOnly ? kv("期間", `<span class="badge blue">${m.summerOnly}</span>`) : ""}
           ${kv("利用曜日", m.days)}
-          ${kv("バス", m.bus ? "利用あり(" + m.busStop + ")" : "利用なし")}
+          ${kv("バス", m.bus ? `利用あり(${m.busStop}・ふだんは ${m.busTime||"—"} 発の便)` : "利用なし")}
+          ${kv("市報告", m.sn ? `<span class="badge orange">障害児の内数に含める</span>` : "障害児の内数に含めない")}
           ${kv("お迎え可能", m.pickup)}
           ${kv("アレルギー", m.allergy === "なし" ? "なし" : `<span class="badge orange">${m.allergy}</span>`)}
           ${kv("配慮事項", m.care)}
@@ -1821,12 +2159,17 @@ function openMemberEdit(key){
   document.getElementById("meNow").textContent = `現在: ${m.member}(${m.since}〜 ${m.days})`;
   document.getElementById("meDays").value = m.days;
   document.getElementById("meReason").value = "";
+  document.getElementById("mePeriod").value = "";
   renderMeChips();
   document.getElementById("memberEditOverlay").classList.add("open");
 }
 function renderMeChips(){
   document.getElementById("meChips").innerHTML = PLAN_KEYS.map(p =>
     `<div class="chip ${mePlan===p?"sel":""}" onclick="pickMePlan('${p}')">${p==="退会"?"退会":p}</div>`).join("");
+  const diff = entryDiff(M(meKey).member, mePlan);
+  const n = document.getElementById("meFeeNote");
+  n.classList.toggle("hidden", !diff);
+  n.innerHTML = diff ? `スポットからの変更のため、入会金の差額 <b>${diff.toLocaleString()}円</b> を適用開始月の請求に加算します。` : "";
 }
 function pickMePlan(p){ mePlan = p; renderMeChips(); }
 function closeMemberEdit(){ document.getElementById("memberEditOverlay").classList.remove("open"); }
@@ -1834,9 +2177,14 @@ function saveMemberEdit(){
   const m = M(meKey), before = m.member;
   const start = document.getElementById("meStart").value;
   const reason = document.getElementById("meReason").value.trim() || "—";
+  const summer = document.getElementById("mePeriod").value === "summer";
+  if (summer && reason === "—") { alert("夏休みだけの変更は、理由を入れてください"); return; }
+  const diff = entryDiff(before, mePlan);
   m.member = mePlan; m.since = start; m.days = document.getElementById("meDays").value.trim() || m.days;
+  m.summerOnly = summer ? `夏休みの期間だけ(${SUMMER})。終了後はスポットに自動で戻る` : "";
+  if (diff) { m.entryFee += diff; m.entryPaid = `差額 ${diff.toLocaleString()}円を請求中(${start}分の引落に加算)`; }
   CHANGELOG.unshift({ when:"たった今", who:"スタッフA", target:`${m.name}(${m.grade})`,
-    text:`会員区分 ${before}→${mePlan}(${start}から) / ${reason}` });
+    text:`会員区分 ${before}→${mePlan}(${summer?"夏休みのみ":start+"から"}) / ${reason}${diff?` / 入会金差額 ${diff.toLocaleString()}円を請求`:""}` });
   m.notes.unshift({ d:"たった今", by:"スタッフA", t:`区分変更を登録: ${before}→${mePlan}(${start}から)。${reason}` });
   closeMemberEdit(); renderMasterDetail(); renderMasterList(); renderDayTable(); renderChangeLog();
   if (meKey === ME) renderMemberScreen();
@@ -1871,7 +2219,8 @@ function showManual(which){
 function closeManual(which){ switchRole(which); }
 function adminTab(t){
   if (t === "inquiry") openThread(currentThread);
-  ["today","monthly","invoice","notice","inquiry","master","calendar"].forEach(x=>{
+  if (t === "report") renderReport();
+  ["today","monthly","invoice","notice","inquiry","master","calendar","report"].forEach(x=>{
     document.getElementById("tab-"+x).classList.toggle("hidden", x!==t);
   });
   document.querySelectorAll(".admin-tabs button").forEach(b=>b.classList.toggle("active", b.dataset.tab===t));
@@ -1895,6 +2244,7 @@ renderChat("chatLogAdmin", THREADS[0], "admin");
 renderChat("chatLogParent", THREADS[0], "parent");
 updateBadges();
 renderHistoryAdmin();
+renderDayOps();
 </script>
 </body>
 </html>
